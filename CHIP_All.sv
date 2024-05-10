@@ -1382,7 +1382,7 @@ module CHIP_All
         else if (i_frame_start && (curr_pose[0] == 0)) begin
             for(int i = 0; i <= 11; i = i + 1) begin curr_pose[i] <= i_pose[i]; end
         end
-        else if ((((!i_f_or_d) && (count_of_f > 0)) || (i_f_or_d)) && update_done) begin
+        else if (((feature_out) || (i_f_or_d)) && update_done) begin
             for(int i = 0; i <= 11; i = i + 1) begin curr_pose[i] <= update_pose[i]; end
         end
         else begin
