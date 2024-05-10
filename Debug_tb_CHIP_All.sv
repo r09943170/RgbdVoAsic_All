@@ -70,7 +70,7 @@
 module Debug_tb_CHIP_All;
     import RgbdVoConfigPk::*;
     
-    integer i, j, k, index, time_cnt, display_cnt;
+    integer i, j, k, index, time_cnt, display_cnt, display_en;
     integer f_poes;
 
     // genvar s;
@@ -85,6 +85,8 @@ module Debug_tb_CHIP_All;
     logic [15:0] depth_in2 [0:307199];
     logic [15:0] depth_in3 [0:307199];
 
+    logic [3:0]  cnt_of_f_start;
+    logic [3:0]  cnt_of_f;
     logic [3:0]  n_of_d;
     logic [3:0]  cnt_of_d;
     logic        valid_0_en;
@@ -126,7 +128,8 @@ module Debug_tb_CHIP_All;
         j           = 0;
         k           = 0;
         index       = 0;
-        n_of_f      = 4'd2;
+        display_en  = 19840;
+        n_of_f      = 4'd4;
         n_of_d      = 4'd3;
         $readmemh ("./testfile/pixel_in.txt", pixel_in);
         $readmemh ("./testfile/pixel_in2.txt", pixel_in2);
@@ -160,19 +163,37 @@ module Debug_tb_CHIP_All;
     end
 
     always @(posedge clk or negedge rst_n)begin
+        if(!rst_n) begin
+            cnt_of_f_start <= 0;
+        end
+        else if(!f_or_d && start) begin
+            cnt_of_f_start <= cnt_of_f_start + 1;
+        end
+    end
+
+    always @(posedge clk or negedge rst_n)begin
+        if(!rst_n) begin
+            cnt_of_f <= 0;
+        end
+        else if(!f_or_d && update_done) begin
+            cnt_of_f <= cnt_of_f + 1;
+        end
+    end
+    
+    always @(posedge clk or negedge rst_n)begin
         if(!rst_n) time_cnt <= 0;
         else time_cnt <= time_cnt + 1;
     end
 
     always @(posedge clk or negedge rst_n)begin
         if(!rst_n) display_cnt <= 0;
-        else if (display_cnt == 19840) display_cnt <= 1;
+        else if (display_cnt == display_en) display_cnt <= 1;
         else display_cnt <= display_cnt + 1;
     end
 
     always @(posedge clk or negedge rst_n)begin
         if(!rst_n) time_per <= 0;
-        else if (display_cnt == 19839) time_per <= time_per + 1;
+        else if (display_cnt == (display_en-1)) time_per <= time_per + 1;
         else time_per <= time_per;
     end
 
@@ -180,7 +201,7 @@ module Debug_tb_CHIP_All;
         if(!rst_n) begin
             cnt_of_d <= 0;
         end
-        else if(f_or_d && done && (cnt_of_d < (n_of_d-1))) begin
+        else if(f_or_d && done && (cnt_of_d <= (n_of_d-1))) begin
             cnt_of_d <= cnt_of_d + 1;
         end
     end
@@ -372,23 +393,23 @@ module Debug_tb_CHIP_All;
     end
 
     always @(posedge clk)begin
-        if (display_cnt == 19840) begin
+        if (display_cnt == display_en) begin
             $display("finish %d cycles, %d percentage", time_cnt, time_per);
         end
         if(start) begin
             if (!f_or_d) begin
-                $display("frame %d start", $unsigned(index));
+                $display("Feature frame %d start", $unsigned(cnt_of_f_start));
             end
             else begin
-                $display("frame %d start", $unsigned(cnt_of_d));
+                $display("Direct frame %d start", $unsigned(cnt_of_d));
             end
         end
         if(update_done) begin
             if (!f_or_d) begin
-                $display("index = %d", $unsigned(index));
+                $display("cnt_of_Feature = %d", $unsigned(cnt_of_f));
             end
             else begin
-                $display("cnt_of_d = %d", $unsigned(cnt_of_d));
+                $display("cnt_of_Direct = %d", $unsigned(cnt_of_d));
             end
             $display("Rt[0] = %d", $signed(new_pose[0]));
             $display("Rt[1] = %d", $signed(new_pose[1]));
@@ -403,16 +424,16 @@ module Debug_tb_CHIP_All;
             $display("Rt[10] = %d", $signed(new_pose[10]));
             $display("Rt[11] = %d", $signed(new_pose[11]));
             if (!f_or_d) begin
-                $display("frame %d end", $unsigned(index));
+                $display("Feature frame %d end", $unsigned(cnt_of_f));
             end
             else begin
-                $display("frame %d end", $unsigned(cnt_of_d));
+                $display("Direct frame %d end", $unsigned(cnt_of_d));
             end
             if (!f_or_d) begin
-                $fwrite(f_poes, "index = %d\n", $unsigned(index));
+                $fwrite(f_poes, "cnt_of_Feature = %d\n", $unsigned(cnt_of_f));
             end
             else begin
-                $fwrite(f_poes, "cnt_of_d = %d\n", $unsigned(cnt_of_d));
+                $fwrite(f_poes, "cnt_of_Direct = %d\n", $unsigned(cnt_of_d));
             end
             $fwrite(f_poes, "%d\n", $signed(new_pose[0]));
             $fwrite(f_poes, "%d\n", $signed(new_pose[1]));
