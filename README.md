@@ -1,10 +1,10 @@
-Top module: CHIP_Direct.sv
-testbench: Debug_tb_CHIP_Direct.sv
+Top module: CHIP_All.sv
+testbench: Debug_tb_CHIP_All.sv
 
 RTL simulation:
 
 ```
-ncverilog Debug_tb_CHIP_Direct.sv +incdir+/opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver/ -y /opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver +libext+.v +notimingchecks +define+RTL +access+r 
+ncverilog Debug_tb_CHIP_All.sv +incdir+/opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver/ -y /opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver +libext+.v +notimingchecks +define+RTL +access+r 
 ```
 
 or just...
