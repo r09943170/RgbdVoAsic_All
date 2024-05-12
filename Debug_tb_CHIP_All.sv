@@ -163,6 +163,23 @@ module Debug_tb_CHIP_All;
     end
 
     always @(posedge clk or negedge rst_n)begin
+        if(!rst_n) time_cnt <= 0;
+        else time_cnt <= time_cnt + 1;
+    end
+
+    always @(posedge clk or negedge rst_n)begin
+        if(!rst_n) display_cnt <= 0;
+        else if (display_cnt == display_en) display_cnt <= 1;
+        else display_cnt <= display_cnt + 1;
+    end
+
+    always @(posedge clk or negedge rst_n)begin
+        if(!rst_n) time_per <= 0;
+        else if (display_cnt == (display_en-1)) time_per <= time_per + 1;
+        else time_per <= time_per;
+    end
+
+    always @(posedge clk or negedge rst_n)begin
         if(!rst_n) begin
             cnt_of_f_start <= 0;
         end
@@ -178,23 +195,6 @@ module Debug_tb_CHIP_All;
         else if(!f_or_d && update_done) begin
             cnt_of_f <= cnt_of_f + 1;
         end
-    end
-    
-    always @(posedge clk or negedge rst_n)begin
-        if(!rst_n) time_cnt <= 0;
-        else time_cnt <= time_cnt + 1;
-    end
-
-    always @(posedge clk or negedge rst_n)begin
-        if(!rst_n) display_cnt <= 0;
-        else if (display_cnt == display_en) display_cnt <= 1;
-        else display_cnt <= display_cnt + 1;
-    end
-
-    always @(posedge clk or negedge rst_n)begin
-        if(!rst_n) time_per <= 0;
-        else if (display_cnt == (display_en-1)) time_per <= time_per + 1;
-        else time_per <= time_per;
     end
 
     always @(posedge clk or negedge rst_n)begin
@@ -232,7 +232,13 @@ module Debug_tb_CHIP_All;
             depth_1 <= 0;
         end
         else if(!f_or_d) begin
-            if(i < 307200) begin
+            if(index == 3) begin
+                i <= 0;
+                pixel_0 <= 0;
+                depth_0 <= 0;
+                valid_0 <= 0;
+            end
+            else if(i < 307200) begin
                 if(i == 0) start <= 1;
                 else start <= 0;
                 case(index)
@@ -259,9 +265,6 @@ module Debug_tb_CHIP_All;
                 i <= 0;
                 index <= index + 1;
                 valid_0 <= 0;
-            end
-            else if (done) begin
-                i <= 0;
             end
             else if (i == 307200) begin
                 // valid_0 <= 0;
@@ -332,8 +335,26 @@ module Debug_tb_CHIP_All;
 
     always @(posedge clk or negedge rst_n)begin
         if(!rst_n) begin
-            sigma_icp  <= 84'd07774054188783816;
-            sigma_rgbd <= 9'd5;
+            if (n_of_f == 1) begin
+                sigma_icp  <= 84'd8861414002445412;
+                sigma_rgbd <= 9'd8;
+            end
+            else if (n_of_f == 2) begin
+                sigma_icp  <= 84'd7774054188783816;
+                sigma_rgbd <= 9'd5;
+            end
+            else if (n_of_f == 3) begin
+                sigma_icp  <= 84'd8105605771596010;
+                sigma_rgbd <= 9'd5;
+            end
+            else if (n_of_f == 4) begin
+                sigma_icp  <= 84'd8248117036366702;
+                sigma_rgbd <= 9'd5;
+            end
+            else begin
+                sigma_icp  <= 84'd7774054188783816;
+                sigma_rgbd <= 9'd5;
+            end
         end
         if(f_or_d && done) begin
             sigma_icp  <= sigma_icp_next;
