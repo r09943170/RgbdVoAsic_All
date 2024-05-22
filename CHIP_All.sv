@@ -136,12 +136,12 @@ module CHIP_All
     logic [15:0]    bus10_sram_DA;
     logic [8:0]     bus10_sram_AA;
 
-    logic                                 Feature_dstFrame_lb_sram_even_WENA[0:5];
-    logic                                 Feature_dstFrame_lb_sram_even_WENB[0:5];
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] Feature_dstFrame_lb_sram_even_DA[0:5];
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] Feature_dstFrame_lb_sram_even_DB[0:5];
-    logic [H_SIZE_BW-2:0]                 Feature_dstFrame_lb_sram_even_AA[0:5];
-    logic [H_SIZE_BW-2:0]                 Feature_dstFrame_lb_sram_even_AB[0:5];
+    logic                                 Feature_dstFrame_lb_sram_even_WENA[0:4];
+    logic                                 Feature_dstFrame_lb_sram_even_WENB[0:4];
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] Feature_dstFrame_lb_sram_even_DA[0:4];
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] Feature_dstFrame_lb_sram_even_DB[0:4];
+    logic [H_SIZE_BW-2:0]                 Feature_dstFrame_lb_sram_even_AA[0:4];
+    logic [H_SIZE_BW-2:0]                 Feature_dstFrame_lb_sram_even_AB[0:4];
 
         //IndirectCalc
     logic                     i_id_frame_start;
@@ -179,30 +179,12 @@ module CHIP_All
     //Direct
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] srcFrame_lb_sram_QA;
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] srcFrame_lb_sram_QB;
-    logic                                 srcFrame_lb_sram_WENA;
-    logic                                 srcFrame_lb_sram_WENB;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] srcFrame_lb_sram_DA;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] srcFrame_lb_sram_DB;
-    logic [H_SIZE_BW-1:0]                 srcFrame_lb_sram_AA;
-    logic [H_SIZE_BW-1:0]                 srcFrame_lb_sram_AB;
 
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_even_QA[0:62];
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_even_QB[0:62];
-    logic                                 dstFrame_lb_sram_even_WENA[0:62];
-    logic                                 dstFrame_lb_sram_even_WENB[0:62];
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_even_DA[0:62];
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_even_DB[0:62];
-    logic [H_SIZE_BW-2:0]                 dstFrame_lb_sram_even_AA[0:62];
-    logic [H_SIZE_BW-2:0]                 dstFrame_lb_sram_even_AB[0:62];
 
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_odd_QA[0:62];
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_odd_QB[0:62];
-    logic                                 dstFrame_lb_sram_odd_WENA[0:62];
-    logic                                 dstFrame_lb_sram_odd_WENB[0:62];
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_odd_DA[0:62];
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] dstFrame_lb_sram_odd_DB[0:62];
-    logic [H_SIZE_BW-2:0]                 dstFrame_lb_sram_odd_AA[0:62];
-    logic [H_SIZE_BW-2:0]                 dstFrame_lb_sram_odd_AB[0:62];
 
     logic                                 Corr_srcFrame_lb_sram_WENA;
     logic                                 Corr_srcFrame_lb_sram_WENB;
@@ -577,8 +559,8 @@ module CHIP_All
         Feature_dstFrame_lb_sram_even_DA[2] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-DATA_DEPTH_BW){1'b0}}, {src_depth}} : 0;
         Feature_dstFrame_lb_sram_even_DA[3] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-H_SIZE_BW){1'b0}}, {dst_coor_x}}    : 0;
         Feature_dstFrame_lb_sram_even_DA[4] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-V_SIZE_BW){1'b0}}, {dst_coor_y}}    : 0;
-        Feature_dstFrame_lb_sram_even_DA[5] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-DATA_DEPTH_BW){1'b0}}, {dst_depth}} : 0;
-        for(int i = 0; i <= 5; i = i + 1)begin
+        // Feature_dstFrame_lb_sram_even_DA[5] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-DATA_DEPTH_BW){1'b0}}, {dst_depth}} : 0;
+        for(int i = 0; i <= 4; i = i + 1)begin
             Feature_dstFrame_lb_sram_even_WENA[i] = (!i_f_or_d) ? ((count_of_f == 0) ? (!feature_valid) : 1) : 1;
             Feature_dstFrame_lb_sram_even_WENB[i] = (!i_f_or_d) ? 1 : 1;
             Feature_dstFrame_lb_sram_even_DB[i] = (!i_f_or_d) ? 0 : 0;
@@ -587,41 +569,10 @@ module CHIP_All
         end
     end
 
-    always_comb begin
-        srcFrame_lb_sram_WENA = (!i_f_or_d) ? 1  : Corr_srcFrame_lb_sram_WENA;
-        srcFrame_lb_sram_WENB = (!i_f_or_d) ? 1  : Corr_srcFrame_lb_sram_WENB;
-        srcFrame_lb_sram_DA   = (!i_f_or_d) ? 0  : Corr_srcFrame_lb_sram_DA;
-        srcFrame_lb_sram_DB   = (!i_f_or_d) ? 0  : Corr_srcFrame_lb_sram_DB;
-        srcFrame_lb_sram_AA   = (!i_f_or_d) ? 0  : Corr_srcFrame_lb_sram_AA;
-        srcFrame_lb_sram_AB   = (!i_f_or_d) ? 20 : Corr_srcFrame_lb_sram_AB;
-        for(int i = 0; i <= 5; i = i + 1)begin
-            dstFrame_lb_sram_even_WENA[i] = (!i_f_or_d) ? Feature_dstFrame_lb_sram_even_WENA[i] : Corr_dstFrame_lb_sram_even_WENA[i];
-            dstFrame_lb_sram_even_WENB[i] = (!i_f_or_d) ? Feature_dstFrame_lb_sram_even_WENB[i] : Corr_dstFrame_lb_sram_even_WENB[i];
-            dstFrame_lb_sram_even_DA[i]   = (!i_f_or_d) ? Feature_dstFrame_lb_sram_even_DA[i]   : Corr_dstFrame_lb_sram_even_DA[i]  ;
-            dstFrame_lb_sram_even_DB[i]   = (!i_f_or_d) ? Feature_dstFrame_lb_sram_even_DB[i]   : Corr_dstFrame_lb_sram_even_DB[i]  ;
-            dstFrame_lb_sram_even_AA[i]   = (!i_f_or_d) ? Feature_dstFrame_lb_sram_even_AA[i]   : Corr_dstFrame_lb_sram_even_AA[i]  ;
-            dstFrame_lb_sram_even_AB[i]   = (!i_f_or_d) ? Feature_dstFrame_lb_sram_even_AB[i]   : Corr_dstFrame_lb_sram_even_AB[i]  ;
-        end
-        for(int i = 6; i <= 62; i = i + 1)begin
-            dstFrame_lb_sram_even_WENA[i] = (!i_f_or_d) ? 1  : Corr_dstFrame_lb_sram_even_WENA[i];
-            dstFrame_lb_sram_even_WENB[i] = (!i_f_or_d) ? 1  : Corr_dstFrame_lb_sram_even_WENB[i];
-            dstFrame_lb_sram_even_DA[i]   = (!i_f_or_d) ? 0  : Corr_dstFrame_lb_sram_even_DA[i]  ;
-            dstFrame_lb_sram_even_DB[i]   = (!i_f_or_d) ? 0  : Corr_dstFrame_lb_sram_even_DB[i]  ;
-            dstFrame_lb_sram_even_AA[i]   = (!i_f_or_d) ? 0  : Corr_dstFrame_lb_sram_even_AA[i]  ;
-            dstFrame_lb_sram_even_AB[i]   = (!i_f_or_d) ? 20 : Corr_dstFrame_lb_sram_even_AB[i]  ;
-        end
-        for(int i = 0; i <= 62; i = i + 1)begin
-            dstFrame_lb_sram_odd_WENA[i] = (!i_f_or_d) ? 1  : Corr_dstFrame_lb_sram_odd_WENA[i];
-            dstFrame_lb_sram_odd_WENB[i] = (!i_f_or_d) ? 1  : Corr_dstFrame_lb_sram_odd_WENB[i];
-            dstFrame_lb_sram_odd_DA[i]   = (!i_f_or_d) ? 0  : Corr_dstFrame_lb_sram_odd_DA[i]  ;
-            dstFrame_lb_sram_odd_DB[i]   = (!i_f_or_d) ? 0  : Corr_dstFrame_lb_sram_odd_DB[i]  ;
-            dstFrame_lb_sram_odd_AA[i]   = (!i_f_or_d) ? 0  : Corr_dstFrame_lb_sram_odd_AA[i]  ;
-            dstFrame_lb_sram_odd_AB[i]   = (!i_f_or_d) ? 20 : Corr_dstFrame_lb_sram_odd_AB[i]  ;
-        end
-    end
-
     SRAM_all u_SRAM_all(
          .i_clk           ( i_clk )
+        ,.i_rst_n         ( i_rst_n)
+        ,.i_f_or_d        ( i_f_or_d )
 
         ,.bus1_sram_QA    ( bus1_sram_QA )
         ,.bus1_sram_QB    ( bus1_sram_QB )
@@ -689,32 +640,39 @@ module CHIP_All
         ,.bus10_sram_DA   ( bus10_sram_DA )
         ,.bus10_sram_AA   ( bus10_sram_AA )
 
-        ,.srcFrame_lb_sram_QA        ( srcFrame_lb_sram_QA )
-        ,.srcFrame_lb_sram_QB        ( srcFrame_lb_sram_QB )
-        ,.srcFrame_lb_sram_WENA      ( srcFrame_lb_sram_WENA )
-        ,.srcFrame_lb_sram_WENB      ( srcFrame_lb_sram_WENB )
-        ,.srcFrame_lb_sram_DA        ( srcFrame_lb_sram_DA )
-        ,.srcFrame_lb_sram_DB        ( srcFrame_lb_sram_DB )
-        ,.srcFrame_lb_sram_AA        ( srcFrame_lb_sram_AA )
-        ,.srcFrame_lb_sram_AB        ( srcFrame_lb_sram_AB )
+        ,.Feature_dstFrame_lb_sram_even_WENA ( Feature_dstFrame_lb_sram_even_WENA )
+        ,.Feature_dstFrame_lb_sram_even_WENB ( Feature_dstFrame_lb_sram_even_WENB )
+        ,.Feature_dstFrame_lb_sram_even_DA   ( Feature_dstFrame_lb_sram_even_DA )
+        ,.Feature_dstFrame_lb_sram_even_DB   ( Feature_dstFrame_lb_sram_even_DB )
+        ,.Feature_dstFrame_lb_sram_even_AA   ( Feature_dstFrame_lb_sram_even_AA )
+        ,.Feature_dstFrame_lb_sram_even_AB   ( Feature_dstFrame_lb_sram_even_AB )
 
-        ,.dstFrame_lb_sram_even_QA   ( dstFrame_lb_sram_even_QA )
-        ,.dstFrame_lb_sram_even_QB   ( dstFrame_lb_sram_even_QB )
-        ,.dstFrame_lb_sram_even_WENA ( dstFrame_lb_sram_even_WENA )
-        ,.dstFrame_lb_sram_even_WENB ( dstFrame_lb_sram_even_WENB )
-        ,.dstFrame_lb_sram_even_DA   ( dstFrame_lb_sram_even_DA )
-        ,.dstFrame_lb_sram_even_DB   ( dstFrame_lb_sram_even_DB )
-        ,.dstFrame_lb_sram_even_AA   ( dstFrame_lb_sram_even_AA )
-        ,.dstFrame_lb_sram_even_AB   ( dstFrame_lb_sram_even_AB )
+        ,.srcFrame_lb_sram_QA             ( srcFrame_lb_sram_QA )
+        ,.srcFrame_lb_sram_QB             ( srcFrame_lb_sram_QB )
+        ,.Corr_srcFrame_lb_sram_WENA      ( Corr_srcFrame_lb_sram_WENA )
+        ,.Corr_srcFrame_lb_sram_WENB      ( Corr_srcFrame_lb_sram_WENB )
+        ,.Corr_srcFrame_lb_sram_DA        ( Corr_srcFrame_lb_sram_DA )
+        ,.Corr_srcFrame_lb_sram_DB        ( Corr_srcFrame_lb_sram_DB )
+        ,.Corr_srcFrame_lb_sram_AA        ( Corr_srcFrame_lb_sram_AA )
+        ,.Corr_srcFrame_lb_sram_AB        ( Corr_srcFrame_lb_sram_AB )
 
-        ,.dstFrame_lb_sram_odd_QA    ( dstFrame_lb_sram_odd_QA )
-        ,.dstFrame_lb_sram_odd_QB    ( dstFrame_lb_sram_odd_QB )
-        ,.dstFrame_lb_sram_odd_WENA  ( dstFrame_lb_sram_odd_WENA )
-        ,.dstFrame_lb_sram_odd_WENB  ( dstFrame_lb_sram_odd_WENB )
-        ,.dstFrame_lb_sram_odd_DA    ( dstFrame_lb_sram_odd_DA )
-        ,.dstFrame_lb_sram_odd_DB    ( dstFrame_lb_sram_odd_DB )
-        ,.dstFrame_lb_sram_odd_AA    ( dstFrame_lb_sram_odd_AA )
-        ,.dstFrame_lb_sram_odd_AB    ( dstFrame_lb_sram_odd_AB )
+        ,.dstFrame_lb_sram_even_QA        ( dstFrame_lb_sram_even_QA )
+        ,.dstFrame_lb_sram_even_QB        ( dstFrame_lb_sram_even_QB )
+        ,.Corr_dstFrame_lb_sram_even_WENA ( Corr_dstFrame_lb_sram_even_WENA )
+        ,.Corr_dstFrame_lb_sram_even_WENB ( Corr_dstFrame_lb_sram_even_WENB )
+        ,.Corr_dstFrame_lb_sram_even_DA   ( Corr_dstFrame_lb_sram_even_DA )
+        ,.Corr_dstFrame_lb_sram_even_DB   ( Corr_dstFrame_lb_sram_even_DB )
+        ,.Corr_dstFrame_lb_sram_even_AA   ( Corr_dstFrame_lb_sram_even_AA )
+        ,.Corr_dstFrame_lb_sram_even_AB   ( Corr_dstFrame_lb_sram_even_AB )
+
+        ,.dstFrame_lb_sram_odd_QA         ( dstFrame_lb_sram_odd_QA )
+        ,.dstFrame_lb_sram_odd_QB         ( dstFrame_lb_sram_odd_QB )
+        ,.Corr_dstFrame_lb_sram_odd_WENA  ( Corr_dstFrame_lb_sram_odd_WENA )
+        ,.Corr_dstFrame_lb_sram_odd_WENB  ( Corr_dstFrame_lb_sram_odd_WENB )
+        ,.Corr_dstFrame_lb_sram_odd_DA    ( Corr_dstFrame_lb_sram_odd_DA )
+        ,.Corr_dstFrame_lb_sram_odd_DB    ( Corr_dstFrame_lb_sram_odd_DB )
+        ,.Corr_dstFrame_lb_sram_odd_AA    ( Corr_dstFrame_lb_sram_odd_AA )
+        ,.Corr_dstFrame_lb_sram_odd_AB    ( Corr_dstFrame_lb_sram_odd_AB )
     );
 
     //12T
@@ -973,14 +931,14 @@ module CHIP_All
         ,.i_Ax_3                  ( Rgbd_A3 )
         ,.i_Ax_4                  ( Rgbd_A4 )
         ,.i_Ax_5                  ( Rgbd_A5 )
-        ,.i_Ay_0                  ( '0 )
-        ,.i_Ay_1                  ( '0 )
-        ,.i_Ay_2                  ( '0 )
-        ,.i_Ay_3                  ( '0 )
-        ,.i_Ay_4                  ( '0 )
-        ,.i_Ay_5                  ( '0 )
+        ,.i_Ay_0                  ( 42'd0 )
+        ,.i_Ay_1                  ( 42'd0 )
+        ,.i_Ay_2                  ( 42'd0 )
+        ,.i_Ay_3                  ( 42'd0 )
+        ,.i_Ay_4                  ( 42'd0 )
+        ,.i_Ay_5                  ( 42'd0 )
         ,.i_diffs_x               ( Rgbd_diff_div_w )
-        ,.i_diffs_y               ( '0 )
+        ,.i_diffs_y               ( 42'd0 )
         // output
         ,.o_frame_end             ( Rgbd_mat_frame_end )
         ,.o_Mat_00                ( Rgbd_Mat_00 )
@@ -1416,15 +1374,15 @@ module CHIP_All
 
     //Direct
     always_ff @(posedge i_clk or negedge i_rst_n) begin
-        if (!i_rst_n) ICP_sigma_r <= '0;
-        else if (o_done) ICP_sigma_r <= '0;
+        if (!i_rst_n) ICP_sigma_r <= 0;
+        else if (o_done) ICP_sigma_r <= 0;
         else if (ICP_sigma_frame_end) ICP_sigma_r <= ICP_sigma;
         else ICP_sigma_r <= ICP_sigma_r;
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
-        if (!i_rst_n) Rgbd_sigma_r <= '0;
-        else if (o_done) Rgbd_sigma_r <= '0;
+        if (!i_rst_n) Rgbd_sigma_r <= 0;
+        else if (o_done) Rgbd_sigma_r <= 0;
         else if (Rgbd_sigma_frame_end) Rgbd_sigma_r <= Rgbd_sigma;
         else Rgbd_sigma_r <= Rgbd_sigma_r;
     end

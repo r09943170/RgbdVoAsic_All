@@ -1,0 +1,23 @@
+5:07:02 PM - ARM Physical IP, Inc.
+5:07:02 PM - Linux Media10 4.18.0-348.23.1.el8_5.x86_64 #1 SMP Tue Apr 26 18:43:12 PDT 2022 x86_64 x86_64 x86_64 GNU/Linux
+5:07:02 PM - Version r5p0
+5:07:02 PM - GUI version 7.0.18
+5:07:02 PM - 
+5:07:02 PM - CONFIDENTIAL AND PROPRIETARY SOFTWARE OF ARM PHYSICAL IP, INC.
+5:07:02 PM - 
+5:07:02 PM - Copyright (c) 1993 - 2024 ARM Physical IP, Inc.  All Rights Reserved.
+5:07:02 PM - 
+5:07:02 PM - Use of this Software is subject to the terms and conditions of the
+5:07:02 PM - applicable license agreement with ARM Physical IP, Inc. 
+5:07:02 PM - In addition, this Software is protected by patents, copyright law 
+5:07:02 PM - and international treaties.
+5:07:02 PM - 
+5:07:02 PM - The copyright notice(s) in this Software does not indicate actual or
+5:07:02 PM - intended publication of this Software.
+5:07:02 PM - 
+5:07:02 PM - High Density Dual Port SRAM RVT-HVT-RVT Compiler, 40G 40nm Process, 256 Rows Per Bank, 0.589um^2 Bit Cell
+5:07:02 PM - 
+5:07:02 PM - Log file is ACI.log
+5:07:02 PM - 
+5:09:31 PM - command: /opt/CAD/cell_lib/CBDK_TSMC40_Arm_f2.0/CIC/Memory/sram_dp_hde_rvt_hvt_rvt/r5p0/bin/sram_dp_hde_rvt_hvt_rvt verilog -instname "sram_dp_desc_8" -words 512 -bits 8 -frequency 1000 -mux 16 -pipeline off -write_mask off -wp_size 8 -write_thru off -top_layer "m5-m9" -power_type otc -redundancy off -rcols 2 -rrows 4 -bmux on -ser none -power_gating off -retention on -ema on -atf off -cust_comment "" -bus_notation on -left_bus_delim "[" -right_bus_delim "]" -pwr_gnd_rename "vddpe:VDDPE,vddce:VDDCE,vsse:VSSE" -prefix "" -name_case upper -rows_p_bl 256 -check_instname on -diodes on -drive 6 -dnw off -dpccm on -corners ss_0p81v_0p81v_m40c,ss_0p81v_0p81v_125c,ffg_0p99v_0p99v_125c,ff_0p99v_0p99v_125c,ff_0p99v_0p99v_m40c,tt_0p90v_0p90v_25c
+5:09:33 PM - Verilog Model generator succeeded, created: sram_dp_desc_8.v

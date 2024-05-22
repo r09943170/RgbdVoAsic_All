@@ -15,10 +15,10 @@
 //
 //      Verilog model for Synchronous Dual-Port Ram
 //
-//       Instance Name:              sram_dp_dstFrame
-//       Words:                      320
-//       Bits:                       24
-//       Mux:                        4
+//       Instance Name:              sram_dp_desc_8
+//       Words:                      512
+//       Bits:                       8
+//       Mux:                        16
 //       Drive:                      6
 //       Write Mask:                 Off
 //       Write Thru:                 Off
@@ -32,7 +32,7 @@
 //       Weak Bit Test:	        Off
 //       Read Disturb Test:	        Off
 //       
-//       Creation Date:  Mon May 20 17:41:31 2024
+//       Creation Date:  Mon May 20 17:09:32 2024
 //       Version: 	r5p0
 //
 //      Modeling Assumptions: This model supports full gate level simulation
@@ -74,24 +74,24 @@
 `celldefine
 // If POWER_PINS is defined at Simulator Command Line, it selects the module definition with Power Ports
 `ifdef POWER_PINS
-module sram_dp_dstFrame (VDDCE, VDDPE, VSSE, CENYA, WENYA, AYA, DYA, CENYB, WENYB,
-    AYB, DYB, QA, QB, CLKA, CENA, WENA, AA, DA, CLKB, CENB, WENB, AB, DB, EMAA, EMAWA,
-    EMASA, EMAB, EMAWB, EMASB, TENA, BENA, TCENA, TWENA, TAA, TDA, TQA, TENB, BENB,
-    TCENB, TWENB, TAB, TDB, TQB, RET1N, STOVA, STOVB, COLLDISN);
+module sram_dp_desc_8 (VDDCE, VDDPE, VSSE, CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB,
+    DYB, QA, QB, CLKA, CENA, WENA, AA, DA, CLKB, CENB, WENB, AB, DB, EMAA, EMAWA, EMASA,
+    EMAB, EMAWB, EMASB, TENA, BENA, TCENA, TWENA, TAA, TDA, TQA, TENB, BENB, TCENB,
+    TWENB, TAB, TDB, TQB, RET1N, STOVA, STOVB, COLLDISN);
 `else
-module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB, CLKA,
+module sram_dp_desc_8 (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB, CLKA,
     CENA, WENA, AA, DA, CLKB, CENB, WENB, AB, DB, EMAA, EMAWA, EMASA, EMAB, EMAWB,
     EMASB, TENA, BENA, TCENA, TWENA, TAA, TDA, TQA, TENB, BENB, TCENB, TWENB, TAB,
     TDB, TQB, RET1N, STOVA, STOVB, COLLDISN);
 `endif
 
   parameter ASSERT_PREFIX = "";
-  parameter BITS = 24;
-  parameter WORDS = 320;
-  parameter MUX = 4;
-  parameter MEM_WIDTH = 96; // redun block size 4, 48 on left, 48 on right
-  parameter MEM_HEIGHT = 80;
-  parameter WP_SIZE = 24 ;
+  parameter BITS = 8;
+  parameter WORDS = 512;
+  parameter MUX = 16;
+  parameter MEM_WIDTH = 128; // redun block size 4, 64 on left, 64 on right
+  parameter MEM_HEIGHT = 32;
+  parameter WP_SIZE = 8 ;
   parameter UPM_WIDTH = 3;
   parameter UPMW_WIDTH = 2;
   parameter UPMS_WIDTH = 1;
@@ -99,23 +99,23 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   output  CENYA;
   output  WENYA;
   output [8:0] AYA;
-  output [23:0] DYA;
+  output [7:0] DYA;
   output  CENYB;
   output  WENYB;
   output [8:0] AYB;
-  output [23:0] DYB;
-  output [23:0] QA;
-  output [23:0] QB;
+  output [7:0] DYB;
+  output [7:0] QA;
+  output [7:0] QB;
   input  CLKA;
   input  CENA;
   input  WENA;
   input [8:0] AA;
-  input [23:0] DA;
+  input [7:0] DA;
   input  CLKB;
   input  CENB;
   input  WENB;
   input [8:0] AB;
-  input [23:0] DB;
+  input [7:0] DB;
   input [2:0] EMAA;
   input [1:0] EMAWA;
   input  EMASA;
@@ -127,15 +127,15 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   input  TCENA;
   input  TWENA;
   input [8:0] TAA;
-  input [23:0] TDA;
-  input [23:0] TQA;
+  input [7:0] TDA;
+  input [7:0] TQA;
   input  TENB;
   input  BENB;
   input  TCENB;
   input  TWENB;
   input [8:0] TAB;
-  input [23:0] TDB;
-  input [23:0] TQB;
+  input [7:0] TDB;
+  input [7:0] TQB;
   input  RET1N;
   input  STOVA;
   input  STOVB;
@@ -148,22 +148,24 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
 
   integer row_address;
   integer mux_address;
-  reg [95:0] mem [0:79];
-  reg [95:0] row;
+  reg [127:0] mem [0:31];
+  reg [127:0] row;
   reg LAST_CLKA;
-  reg [95:0] row_mask;
-  reg [95:0] new_data;
-  reg [95:0] data_out;
-  reg [23:0] readLatch0;
-  reg [23:0] shifted_readLatch0;
-  reg [23:0] readLatch1;
-  reg [23:0] shifted_readLatch1;
+  reg [127:0] row_mask;
+  reg [127:0] new_data;
+  reg [127:0] data_out;
+  reg [31:0] readLatch0;
+  reg [31:0] shifted_readLatch0;
+  reg [1:0] read_mux_sel0;
+  reg [31:0] readLatch1;
+  reg [31:0] shifted_readLatch1;
+  reg [1:0] read_mux_sel1;
   reg LAST_CLKB;
-  reg [23:0] QA_int;
-  reg [23:0] QA_int_delayed;
-  reg [23:0] QB_int;
-  reg [23:0] QB_int_delayed;
-  reg [23:0] writeEnable;
+  reg [7:0] QA_int;
+  reg [7:0] QA_int_delayed;
+  reg [7:0] QB_int;
+  reg [7:0] QB_int_delayed;
+  reg [7:0] writeEnable;
   real previous_CLKA;
   real previous_CLKB;
   initial previous_CLKA = 0;
@@ -176,25 +178,17 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   initial cont_flag1_int = 1'b0;
 
   reg NOT_CENA, NOT_WENA, NOT_AA8, NOT_AA7, NOT_AA6, NOT_AA5, NOT_AA4, NOT_AA3, NOT_AA2;
-  reg NOT_AA1, NOT_AA0, NOT_DA23, NOT_DA22, NOT_DA21, NOT_DA20, NOT_DA19, NOT_DA18;
-  reg NOT_DA17, NOT_DA16, NOT_DA15, NOT_DA14, NOT_DA13, NOT_DA12, NOT_DA11, NOT_DA10;
-  reg NOT_DA9, NOT_DA8, NOT_DA7, NOT_DA6, NOT_DA5, NOT_DA4, NOT_DA3, NOT_DA2, NOT_DA1;
+  reg NOT_AA1, NOT_AA0, NOT_DA7, NOT_DA6, NOT_DA5, NOT_DA4, NOT_DA3, NOT_DA2, NOT_DA1;
   reg NOT_DA0, NOT_CENB, NOT_WENB, NOT_AB8, NOT_AB7, NOT_AB6, NOT_AB5, NOT_AB4, NOT_AB3;
-  reg NOT_AB2, NOT_AB1, NOT_AB0, NOT_DB23, NOT_DB22, NOT_DB21, NOT_DB20, NOT_DB19;
-  reg NOT_DB18, NOT_DB17, NOT_DB16, NOT_DB15, NOT_DB14, NOT_DB13, NOT_DB12, NOT_DB11;
-  reg NOT_DB10, NOT_DB9, NOT_DB8, NOT_DB7, NOT_DB6, NOT_DB5, NOT_DB4, NOT_DB3, NOT_DB2;
+  reg NOT_AB2, NOT_AB1, NOT_AB0, NOT_DB7, NOT_DB6, NOT_DB5, NOT_DB4, NOT_DB3, NOT_DB2;
   reg NOT_DB1, NOT_DB0, NOT_EMAA2, NOT_EMAA1, NOT_EMAA0, NOT_EMAWA1, NOT_EMAWA0, NOT_EMASA;
   reg NOT_EMAB2, NOT_EMAB1, NOT_EMAB0, NOT_EMAWB1, NOT_EMAWB0, NOT_EMASB, NOT_TENA;
   reg NOT_TCENA, NOT_TWENA, NOT_TAA8, NOT_TAA7, NOT_TAA6, NOT_TAA5, NOT_TAA4, NOT_TAA3;
-  reg NOT_TAA2, NOT_TAA1, NOT_TAA0, NOT_TDA23, NOT_TDA22, NOT_TDA21, NOT_TDA20, NOT_TDA19;
-  reg NOT_TDA18, NOT_TDA17, NOT_TDA16, NOT_TDA15, NOT_TDA14, NOT_TDA13, NOT_TDA12;
-  reg NOT_TDA11, NOT_TDA10, NOT_TDA9, NOT_TDA8, NOT_TDA7, NOT_TDA6, NOT_TDA5, NOT_TDA4;
-  reg NOT_TDA3, NOT_TDA2, NOT_TDA1, NOT_TDA0, NOT_TENB, NOT_TCENB, NOT_TWENB, NOT_TAB8;
-  reg NOT_TAB7, NOT_TAB6, NOT_TAB5, NOT_TAB4, NOT_TAB3, NOT_TAB2, NOT_TAB1, NOT_TAB0;
-  reg NOT_TDB23, NOT_TDB22, NOT_TDB21, NOT_TDB20, NOT_TDB19, NOT_TDB18, NOT_TDB17;
-  reg NOT_TDB16, NOT_TDB15, NOT_TDB14, NOT_TDB13, NOT_TDB12, NOT_TDB11, NOT_TDB10;
-  reg NOT_TDB9, NOT_TDB8, NOT_TDB7, NOT_TDB6, NOT_TDB5, NOT_TDB4, NOT_TDB3, NOT_TDB2;
-  reg NOT_TDB1, NOT_TDB0, NOT_RET1N, NOT_STOVA, NOT_STOVB, NOT_COLLDISN;
+  reg NOT_TAA2, NOT_TAA1, NOT_TAA0, NOT_TDA7, NOT_TDA6, NOT_TDA5, NOT_TDA4, NOT_TDA3;
+  reg NOT_TDA2, NOT_TDA1, NOT_TDA0, NOT_TENB, NOT_TCENB, NOT_TWENB, NOT_TAB8, NOT_TAB7;
+  reg NOT_TAB6, NOT_TAB5, NOT_TAB4, NOT_TAB3, NOT_TAB2, NOT_TAB1, NOT_TAB0, NOT_TDB7;
+  reg NOT_TDB6, NOT_TDB5, NOT_TDB4, NOT_TDB3, NOT_TDB2, NOT_TDB1, NOT_TDB0, NOT_RET1N;
+  reg NOT_STOVA, NOT_STOVB, NOT_COLLDISN;
   reg NOT_CONTA, NOT_CLKA_PER, NOT_CLKA_MINH, NOT_CLKA_MINL, NOT_CONTB, NOT_CLKB_PER;
   reg NOT_CLKB_MINH, NOT_CLKB_MINL;
   reg clk0_int;
@@ -203,13 +197,13 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   wire  CENYA_;
   wire  WENYA_;
   wire [8:0] AYA_;
-  wire [23:0] DYA_;
+  wire [7:0] DYA_;
   wire  CENYB_;
   wire  WENYB_;
   wire [8:0] AYB_;
-  wire [23:0] DYB_;
-  wire [23:0] QA_;
-  wire [23:0] QB_;
+  wire [7:0] DYB_;
+  wire [7:0] QA_;
+  wire [7:0] QB_;
  wire  CLKA_;
   wire  CENA_;
   reg  CENA_int;
@@ -218,8 +212,8 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  WENA_int;
   wire [8:0] AA_;
   reg [8:0] AA_int;
-  wire [23:0] DA_;
-  reg [23:0] DA_int;
+  wire [7:0] DA_;
+  reg [7:0] DA_int;
  wire  CLKB_;
   wire  CENB_;
   reg  CENB_int;
@@ -228,8 +222,8 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  WENB_int;
   wire [8:0] AB_;
   reg [8:0] AB_int;
-  wire [23:0] DB_;
-  reg [23:0] DB_int;
+  wire [7:0] DB_;
+  reg [7:0] DB_int;
   wire [2:0] EMAA_;
   reg [2:0] EMAA_int;
   wire [1:0] EMAWA_;
@@ -253,10 +247,10 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  TWENA_int;
   wire [8:0] TAA_;
   reg [8:0] TAA_int;
-  wire [23:0] TDA_;
-  reg [23:0] TDA_int;
-  wire [23:0] TQA_;
-  reg [23:0] TQA_int;
+  wire [7:0] TDA_;
+  reg [7:0] TDA_int;
+  wire [7:0] TQA_;
+  reg [7:0] TQA_int;
   wire  TENB_;
   reg  TENB_int;
   wire  BENB_;
@@ -268,10 +262,10 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  TWENB_int;
   wire [8:0] TAB_;
   reg [8:0] TAB_int;
-  wire [23:0] TDB_;
-  reg [23:0] TDB_int;
-  wire [23:0] TQB_;
-  reg [23:0] TQB_int;
+  wire [7:0] TDB_;
+  reg [7:0] TDB_int;
+  wire [7:0] TQB_;
+  reg [7:0] TQB_int;
   wire  RET1N_;
   reg  RET1N_int;
   wire  STOVA_;
@@ -300,22 +294,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign DYA[5] = DYA_[5]; 
   assign DYA[6] = DYA_[6]; 
   assign DYA[7] = DYA_[7]; 
-  assign DYA[8] = DYA_[8]; 
-  assign DYA[9] = DYA_[9]; 
-  assign DYA[10] = DYA_[10]; 
-  assign DYA[11] = DYA_[11]; 
-  assign DYA[12] = DYA_[12]; 
-  assign DYA[13] = DYA_[13]; 
-  assign DYA[14] = DYA_[14]; 
-  assign DYA[15] = DYA_[15]; 
-  assign DYA[16] = DYA_[16]; 
-  assign DYA[17] = DYA_[17]; 
-  assign DYA[18] = DYA_[18]; 
-  assign DYA[19] = DYA_[19]; 
-  assign DYA[20] = DYA_[20]; 
-  assign DYA[21] = DYA_[21]; 
-  assign DYA[22] = DYA_[22]; 
-  assign DYA[23] = DYA_[23]; 
   assign CENYB = CENYB_; 
   assign WENYB = WENYB_; 
   assign AYB[0] = AYB_[0]; 
@@ -335,22 +313,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign DYB[5] = DYB_[5]; 
   assign DYB[6] = DYB_[6]; 
   assign DYB[7] = DYB_[7]; 
-  assign DYB[8] = DYB_[8]; 
-  assign DYB[9] = DYB_[9]; 
-  assign DYB[10] = DYB_[10]; 
-  assign DYB[11] = DYB_[11]; 
-  assign DYB[12] = DYB_[12]; 
-  assign DYB[13] = DYB_[13]; 
-  assign DYB[14] = DYB_[14]; 
-  assign DYB[15] = DYB_[15]; 
-  assign DYB[16] = DYB_[16]; 
-  assign DYB[17] = DYB_[17]; 
-  assign DYB[18] = DYB_[18]; 
-  assign DYB[19] = DYB_[19]; 
-  assign DYB[20] = DYB_[20]; 
-  assign DYB[21] = DYB_[21]; 
-  assign DYB[22] = DYB_[22]; 
-  assign DYB[23] = DYB_[23]; 
   assign QA[0] = QA_[0]; 
   assign QA[1] = QA_[1]; 
   assign QA[2] = QA_[2]; 
@@ -359,22 +321,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign QA[5] = QA_[5]; 
   assign QA[6] = QA_[6]; 
   assign QA[7] = QA_[7]; 
-  assign QA[8] = QA_[8]; 
-  assign QA[9] = QA_[9]; 
-  assign QA[10] = QA_[10]; 
-  assign QA[11] = QA_[11]; 
-  assign QA[12] = QA_[12]; 
-  assign QA[13] = QA_[13]; 
-  assign QA[14] = QA_[14]; 
-  assign QA[15] = QA_[15]; 
-  assign QA[16] = QA_[16]; 
-  assign QA[17] = QA_[17]; 
-  assign QA[18] = QA_[18]; 
-  assign QA[19] = QA_[19]; 
-  assign QA[20] = QA_[20]; 
-  assign QA[21] = QA_[21]; 
-  assign QA[22] = QA_[22]; 
-  assign QA[23] = QA_[23]; 
   assign QB[0] = QB_[0]; 
   assign QB[1] = QB_[1]; 
   assign QB[2] = QB_[2]; 
@@ -383,22 +329,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign QB[5] = QB_[5]; 
   assign QB[6] = QB_[6]; 
   assign QB[7] = QB_[7]; 
-  assign QB[8] = QB_[8]; 
-  assign QB[9] = QB_[9]; 
-  assign QB[10] = QB_[10]; 
-  assign QB[11] = QB_[11]; 
-  assign QB[12] = QB_[12]; 
-  assign QB[13] = QB_[13]; 
-  assign QB[14] = QB_[14]; 
-  assign QB[15] = QB_[15]; 
-  assign QB[16] = QB_[16]; 
-  assign QB[17] = QB_[17]; 
-  assign QB[18] = QB_[18]; 
-  assign QB[19] = QB_[19]; 
-  assign QB[20] = QB_[20]; 
-  assign QB[21] = QB_[21]; 
-  assign QB[22] = QB_[22]; 
-  assign QB[23] = QB_[23]; 
   assign CLKA_ = CLKA;
   assign CENA_ = CENA;
   assign WENA_ = WENA;
@@ -419,22 +349,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign DA_[5] = DA[5];
   assign DA_[6] = DA[6];
   assign DA_[7] = DA[7];
-  assign DA_[8] = DA[8];
-  assign DA_[9] = DA[9];
-  assign DA_[10] = DA[10];
-  assign DA_[11] = DA[11];
-  assign DA_[12] = DA[12];
-  assign DA_[13] = DA[13];
-  assign DA_[14] = DA[14];
-  assign DA_[15] = DA[15];
-  assign DA_[16] = DA[16];
-  assign DA_[17] = DA[17];
-  assign DA_[18] = DA[18];
-  assign DA_[19] = DA[19];
-  assign DA_[20] = DA[20];
-  assign DA_[21] = DA[21];
-  assign DA_[22] = DA[22];
-  assign DA_[23] = DA[23];
   assign CLKB_ = CLKB;
   assign CENB_ = CENB;
   assign WENB_ = WENB;
@@ -455,22 +369,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign DB_[5] = DB[5];
   assign DB_[6] = DB[6];
   assign DB_[7] = DB[7];
-  assign DB_[8] = DB[8];
-  assign DB_[9] = DB[9];
-  assign DB_[10] = DB[10];
-  assign DB_[11] = DB[11];
-  assign DB_[12] = DB[12];
-  assign DB_[13] = DB[13];
-  assign DB_[14] = DB[14];
-  assign DB_[15] = DB[15];
-  assign DB_[16] = DB[16];
-  assign DB_[17] = DB[17];
-  assign DB_[18] = DB[18];
-  assign DB_[19] = DB[19];
-  assign DB_[20] = DB[20];
-  assign DB_[21] = DB[21];
-  assign DB_[22] = DB[22];
-  assign DB_[23] = DB[23];
   assign EMAA_[0] = EMAA[0];
   assign EMAA_[1] = EMAA[1];
   assign EMAA_[2] = EMAA[2];
@@ -504,22 +402,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign TDA_[5] = TDA[5];
   assign TDA_[6] = TDA[6];
   assign TDA_[7] = TDA[7];
-  assign TDA_[8] = TDA[8];
-  assign TDA_[9] = TDA[9];
-  assign TDA_[10] = TDA[10];
-  assign TDA_[11] = TDA[11];
-  assign TDA_[12] = TDA[12];
-  assign TDA_[13] = TDA[13];
-  assign TDA_[14] = TDA[14];
-  assign TDA_[15] = TDA[15];
-  assign TDA_[16] = TDA[16];
-  assign TDA_[17] = TDA[17];
-  assign TDA_[18] = TDA[18];
-  assign TDA_[19] = TDA[19];
-  assign TDA_[20] = TDA[20];
-  assign TDA_[21] = TDA[21];
-  assign TDA_[22] = TDA[22];
-  assign TDA_[23] = TDA[23];
   assign TQA_[0] = TQA[0];
   assign TQA_[1] = TQA[1];
   assign TQA_[2] = TQA[2];
@@ -528,22 +410,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign TQA_[5] = TQA[5];
   assign TQA_[6] = TQA[6];
   assign TQA_[7] = TQA[7];
-  assign TQA_[8] = TQA[8];
-  assign TQA_[9] = TQA[9];
-  assign TQA_[10] = TQA[10];
-  assign TQA_[11] = TQA[11];
-  assign TQA_[12] = TQA[12];
-  assign TQA_[13] = TQA[13];
-  assign TQA_[14] = TQA[14];
-  assign TQA_[15] = TQA[15];
-  assign TQA_[16] = TQA[16];
-  assign TQA_[17] = TQA[17];
-  assign TQA_[18] = TQA[18];
-  assign TQA_[19] = TQA[19];
-  assign TQA_[20] = TQA[20];
-  assign TQA_[21] = TQA[21];
-  assign TQA_[22] = TQA[22];
-  assign TQA_[23] = TQA[23];
   assign TENB_ = TENB;
   assign BENB_ = BENB;
   assign TCENB_ = TCENB;
@@ -565,22 +431,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign TDB_[5] = TDB[5];
   assign TDB_[6] = TDB[6];
   assign TDB_[7] = TDB[7];
-  assign TDB_[8] = TDB[8];
-  assign TDB_[9] = TDB[9];
-  assign TDB_[10] = TDB[10];
-  assign TDB_[11] = TDB[11];
-  assign TDB_[12] = TDB[12];
-  assign TDB_[13] = TDB[13];
-  assign TDB_[14] = TDB[14];
-  assign TDB_[15] = TDB[15];
-  assign TDB_[16] = TDB[16];
-  assign TDB_[17] = TDB[17];
-  assign TDB_[18] = TDB[18];
-  assign TDB_[19] = TDB[19];
-  assign TDB_[20] = TDB[20];
-  assign TDB_[21] = TDB[21];
-  assign TDB_[22] = TDB[22];
-  assign TDB_[23] = TDB[23];
   assign TQB_[0] = TQB[0];
   assign TQB_[1] = TQB[1];
   assign TQB_[2] = TQB[2];
@@ -589,22 +439,6 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign TQB_[5] = TQB[5];
   assign TQB_[6] = TQB[6];
   assign TQB_[7] = TQB[7];
-  assign TQB_[8] = TQB[8];
-  assign TQB_[9] = TQB[9];
-  assign TQB_[10] = TQB[10];
-  assign TQB_[11] = TQB[11];
-  assign TQB_[12] = TQB[12];
-  assign TQB_[13] = TQB[13];
-  assign TQB_[14] = TQB[14];
-  assign TQB_[15] = TQB[15];
-  assign TQB_[16] = TQB[16];
-  assign TQB_[17] = TQB[17];
-  assign TQB_[18] = TQB[18];
-  assign TQB_[19] = TQB[19];
-  assign TQB_[20] = TQB[20];
-  assign TQB_[21] = TQB[21];
-  assign TQB_[22] = TQB[22];
-  assign TQB_[23] = TQB[23];
   assign RET1N_ = RET1N;
   assign STOVA_ = STOVA;
   assign STOVB_ = STOVB;
@@ -613,13 +447,13 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   assign `ARM_UD_DP CENYA_ = RET1N_ ? (TENA_ ? CENA_ : TCENA_) : 1'bx;
   assign `ARM_UD_DP WENYA_ = RET1N_ ? (TENA_ ? WENA_ : TWENA_) : 1'bx;
   assign `ARM_UD_DP AYA_ = RET1N_ ? (TENA_ ? AA_ : TAA_) : {9{1'bx}};
-  assign `ARM_UD_DP DYA_ = RET1N_ ? (TENA_ ? DA_ : TDA_) : {24{1'bx}};
+  assign `ARM_UD_DP DYA_ = RET1N_ ? (TENA_ ? DA_ : TDA_) : {8{1'bx}};
   assign `ARM_UD_DP CENYB_ = RET1N_ ? (TENB_ ? CENB_ : TCENB_) : 1'bx;
   assign `ARM_UD_DP WENYB_ = RET1N_ ? (TENB_ ? WENB_ : TWENB_) : 1'bx;
   assign `ARM_UD_DP AYB_ = RET1N_ ? (TENB_ ? AB_ : TAB_) : {9{1'bx}};
-  assign `ARM_UD_DP DYB_ = RET1N_ ? (TENB_ ? DB_ : TDB_) : {24{1'bx}};
-  assign `ARM_UD_SEQ QA_ = RET1N_ ? (BENA_ ? ((STOVA_ ? (QA_int_delayed) : (QA_int))) : TQA_) : {24{1'bx}};
-  assign `ARM_UD_SEQ QB_ = RET1N_ ? (BENB_ ? ((STOVB_ ? (QB_int_delayed) : (QB_int))) : TQB_) : {24{1'bx}};
+  assign `ARM_UD_DP DYB_ = RET1N_ ? (TENB_ ? DB_ : TDB_) : {8{1'bx}};
+  assign `ARM_UD_SEQ QA_ = RET1N_ ? (BENA_ ? ((STOVA_ ? (QA_int_delayed) : (QA_int))) : TQA_) : {8{1'bx}};
+  assign `ARM_UD_SEQ QB_ = RET1N_ ? (BENB_ ? ((STOVB_ ? (QB_int_delayed) : (QB_int))) : TQB_) : {8{1'bx}};
 
 // If INITIALIZE_MEMORY is defined at Simulator Command Line, it Initializes the Memory with all ZEROS.
 `ifdef INITIALIZE_MEMORY
@@ -658,25 +492,17 @@ task loadmem;
 	  for (i=0;i<WORDS;i=i+1) begin
 	  wordtemp = memld[i];
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
-        writeEnable = {24{1'b1}};
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, wordtemp[23], 3'b000, wordtemp[22], 3'b000, wordtemp[21],
-          3'b000, wordtemp[20], 3'b000, wordtemp[19], 3'b000, wordtemp[18], 3'b000, wordtemp[17],
-          3'b000, wordtemp[16], 3'b000, wordtemp[15], 3'b000, wordtemp[14], 3'b000, wordtemp[13],
-          3'b000, wordtemp[12], 3'b000, wordtemp[11], 3'b000, wordtemp[10], 3'b000, wordtemp[9],
-          3'b000, wordtemp[8], 3'b000, wordtemp[7], 3'b000, wordtemp[6], 3'b000, wordtemp[5],
-          3'b000, wordtemp[4], 3'b000, wordtemp[3], 3'b000, wordtemp[2], 3'b000, wordtemp[1],
-          3'b000, wordtemp[0]} << mux_address);
+        writeEnable = {8{1'b1}};
+        row_mask =  ( {15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, wordtemp[7], 15'b000000000000000, wordtemp[6],
+          15'b000000000000000, wordtemp[5], 15'b000000000000000, wordtemp[4], 15'b000000000000000, wordtemp[3],
+          15'b000000000000000, wordtemp[2], 15'b000000000000000, wordtemp[1], 15'b000000000000000, wordtemp[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
   	end
@@ -694,23 +520,20 @@ task dumpmem;
      if (CENA_ === 1'b1 && CENB_ === 1'b1) begin
 	  for (i=0;i<WORDS;i=i+1) begin
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
-        writeEnable = {24{1'b1}};
+        writeEnable = {8{1'b1}};
         data_out = (row >> (mux_address));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
+        readLatch0 = {data_out[124], data_out[120], data_out[116], data_out[112], data_out[108],
+          data_out[104], data_out[100], data_out[96], data_out[92], data_out[88], data_out[84],
+          data_out[80], data_out[76], data_out[72], data_out[68], data_out[64], data_out[60],
+          data_out[56], data_out[52], data_out[48], data_out[44], data_out[40], data_out[36],
+          data_out[32], data_out[28], data_out[24], data_out[20], data_out[16], data_out[12],
+          data_out[8], data_out[4], data_out[0]};
       shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+      QA_int = {shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
    	$fdisplay(dump_file_desc, "%b", QA_int);
   end
@@ -724,62 +547,51 @@ task dumpmem;
   begin
     if (RET1N_int === 1'bx || RET1N_int === 1'bz) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0 && CENA_int === 1'b0) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0) begin
       // no cycle in retention mode
     end else if (^{CENA_int, EMAA_int, EMAWA_int, EMASA_int, RET1N_int, (STOVA_int 
      && !CENA_int)} === 1'bx) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if ((AA_int >= WORDS) && (CENA_int === 1'b0)) begin
-      QA_int = WENA_int !== 1'b1 ? QA_int : {24{1'bx}};
-      QA_int_delayed = WENA_int !== 1'b1 ? QA_int_delayed : {24{1'bx}};
+      QA_int = WENA_int !== 1'b1 ? QA_int : {8{1'bx}};
+      QA_int_delayed = WENA_int !== 1'b1 ? QA_int_delayed : {8{1'bx}};
     end else if (CENA_int === 1'b0 && (^AA_int) === 1'bx) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (CENA_int === 1'b0) begin
-      mux_address = (AA_int & 2'b11);
-      row_address = (AA_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AA_int & 4'b1111);
+      row_address = (AA_int >> 4);
+      if (row_address > 31)
+        row = {128{1'bx}};
       else
         row = mem[row_address];
-      writeEnable = ~{24{WENA_int}};
+      writeEnable = ~{8{WENA_int}};
       if (WENA_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DA_int[23], 3'b000, DA_int[22], 3'b000, DA_int[21],
-          3'b000, DA_int[20], 3'b000, DA_int[19], 3'b000, DA_int[18], 3'b000, DA_int[17],
-          3'b000, DA_int[16], 3'b000, DA_int[15], 3'b000, DA_int[14], 3'b000, DA_int[13],
-          3'b000, DA_int[12], 3'b000, DA_int[11], 3'b000, DA_int[10], 3'b000, DA_int[9],
-          3'b000, DA_int[8], 3'b000, DA_int[7], 3'b000, DA_int[6], 3'b000, DA_int[5],
-          3'b000, DA_int[4], 3'b000, DA_int[3], 3'b000, DA_int[2], 3'b000, DA_int[1],
-          3'b000, DA_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DA_int[7], 15'b000000000000000, DA_int[6],
+          15'b000000000000000, DA_int[5], 15'b000000000000000, DA_int[4], 15'b000000000000000, DA_int[3],
+          15'b000000000000000, DA_int[2], 15'b000000000000000, DA_int[1], 15'b000000000000000, DA_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+        readLatch0 = {data_out[124], data_out[120], data_out[116], data_out[112], data_out[108],
+          data_out[104], data_out[100], data_out[96], data_out[92], data_out[88], data_out[84],
+          data_out[80], data_out[76], data_out[72], data_out[68], data_out[64], data_out[60],
+          data_out[56], data_out[52], data_out[48], data_out[44], data_out[40], data_out[36],
+          data_out[32], data_out[28], data_out[24], data_out[20], data_out[16], data_out[12],
+          data_out[8], data_out[4], data_out[0]};
+      shifted_readLatch0 = (readLatch0 >> AA_int[3:2]);
+      QA_int = {shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
       end
     end
@@ -795,25 +607,25 @@ task dumpmem;
   always @ RET1N_ begin
     if (CLKA_ == 1'b1) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end
     if (RET1N_ === 1'bx || RET1N_ === 1'bz) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_ === 1'b0 && RET1N_int === 1'b1 && (CENA_p2 === 1'b0 || TCENA_p2 === 1'b0) ) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_ === 1'b1 && RET1N_int === 1'b0 && (CENA_p2 === 1'b0 || TCENA_p2 === 1'b0) ) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end
     if (RET1N_ == 1'b0) begin
-      QA_int = {24{1'bx}};
-      QA_int_delayed = {24{1'bx}};
+      QA_int = {8{1'bx}};
+      QA_int_delayed = {8{1'bx}};
       CENA_int = 1'bx;
       WENA_int = 1'bx;
       AA_int = {9{1'bx}};
-      DA_int = {24{1'bx}};
+      DA_int = {8{1'bx}};
       EMAA_int = {3{1'bx}};
       EMAWA_int = {2{1'bx}};
       EMASA_int = 1'bx;
@@ -822,18 +634,18 @@ task dumpmem;
       TCENA_int = 1'bx;
       TWENA_int = 1'bx;
       TAA_int = {9{1'bx}};
-      TDA_int = {24{1'bx}};
-      TQA_int = {24{1'bx}};
+      TDA_int = {8{1'bx}};
+      TQA_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVA_int = 1'bx;
       COLLDISN_int = 1'bx;
     end else begin
-      QA_int = {24{1'bx}};
-      QA_int_delayed = {24{1'bx}};
+      QA_int = {8{1'bx}};
+      QA_int_delayed = {8{1'bx}};
       CENA_int = 1'bx;
       WENA_int = 1'bx;
       AA_int = {9{1'bx}};
-      DA_int = {24{1'bx}};
+      DA_int = {8{1'bx}};
       EMAA_int = {3{1'bx}};
       EMAWA_int = {2{1'bx}};
       EMASA_int = 1'bx;
@@ -842,8 +654,8 @@ task dumpmem;
       TCENA_int = 1'bx;
       TWENA_int = 1'bx;
       TAA_int = {9{1'bx}};
-      TDA_int = {24{1'bx}};
-      TQA_int = {24{1'bx}};
+      TDA_int = {8{1'bx}};
+      TQA_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVA_int = 1'bx;
       COLLDISN_int = 1'bx;
@@ -867,7 +679,7 @@ task dumpmem;
   end else begin
     if ((CLKA_ === 1'bx || CLKA_ === 1'bz) && RET1N_ !== 1'b0) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (CLKA_ === 1'b1 && LAST_CLKA === 1'b0) begin
       CENA_int = TENA_ ? CENA_ : TCENA_;
       EMAA_int = EMAA_;
@@ -887,10 +699,12 @@ task dumpmem;
         TCENA_int = TCENA_;
         TAA_int = TAA_;
         TDA_int = TDA_;
+        if (WENA_int === 1'b1)
+          read_mux_sel0 = (TENA_ ? AA_[3:2] : TAA_[3:2] );
       end
       clk0_int = 1'b0;
       if (CENA_int === 1'b0 && WENA_int === 1'b1) 
-         QA_int_delayed = {24{1'bx}};
+         QA_int_delayed = {8{1'bx}};
       if (CENA_int === 1'b0) previous_CLKA = $realtime;
     readWriteA;
     #0;
@@ -910,9 +724,9 @@ task dumpmem;
           $display("%s contention: both writes fail in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           WRITE_WRITE = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
 	      end
         end else if (WENA_int !== 1'b1) begin
@@ -920,14 +734,14 @@ task dumpmem;
           $display("%s contention: write A succeeds, read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
 		end
         end else if (WENB_int !== 1'b1) begin
 		if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: write B succeeds, read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
 		end
         end else begin
           readWriteB;
@@ -967,13 +781,13 @@ task dumpmem;
         if (WENB_int !== 1'b1) begin
           $display("%s contention: write B fails in %m at %0t",ASSERT_PREFIX, $time);
           WRITE_WRITE_1 = 1;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE_1 = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
         end else begin
           readWriteB;
           $display("%s contention: read B succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -988,7 +802,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read A fails in %m at %0t",ASSERT_PREFIX, $time);
@@ -997,7 +811,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
         end else begin
           readWriteA;
           $display("%s contention: read A succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -1018,62 +832,51 @@ task dumpmem;
   begin
     if (RET1N_int === 1'bx || RET1N_int === 1'bz) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0 && CENB_int === 1'b0) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0) begin
       // no cycle in retention mode
     end else if (^{CENB_int, EMAB_int, EMAWB_int, EMASB_int, RET1N_int, (STOVB_int 
      && !CENB_int)} === 1'bx) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if ((AB_int >= WORDS) && (CENB_int === 1'b0)) begin
-      QB_int = WENB_int !== 1'b1 ? QB_int : {24{1'bx}};
-      QB_int_delayed = WENB_int !== 1'b1 ? QB_int_delayed : {24{1'bx}};
+      QB_int = WENB_int !== 1'b1 ? QB_int : {8{1'bx}};
+      QB_int_delayed = WENB_int !== 1'b1 ? QB_int_delayed : {8{1'bx}};
     end else if (CENB_int === 1'b0 && (^AB_int) === 1'bx) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (CENB_int === 1'b0) begin
-      mux_address = (AB_int & 2'b11);
-      row_address = (AB_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AB_int & 4'b1111);
+      row_address = (AB_int >> 4);
+      if (row_address > 31)
+        row = {128{1'bx}};
       else
         row = mem[row_address];
-      writeEnable = ~{24{WENB_int}};
+      writeEnable = ~{8{WENB_int}};
       if (WENB_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DB_int[23], 3'b000, DB_int[22], 3'b000, DB_int[21],
-          3'b000, DB_int[20], 3'b000, DB_int[19], 3'b000, DB_int[18], 3'b000, DB_int[17],
-          3'b000, DB_int[16], 3'b000, DB_int[15], 3'b000, DB_int[14], 3'b000, DB_int[13],
-          3'b000, DB_int[12], 3'b000, DB_int[11], 3'b000, DB_int[10], 3'b000, DB_int[9],
-          3'b000, DB_int[8], 3'b000, DB_int[7], 3'b000, DB_int[6], 3'b000, DB_int[5],
-          3'b000, DB_int[4], 3'b000, DB_int[3], 3'b000, DB_int[2], 3'b000, DB_int[1],
-          3'b000, DB_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DB_int[7], 15'b000000000000000, DB_int[6],
+          15'b000000000000000, DB_int[5], 15'b000000000000000, DB_int[4], 15'b000000000000000, DB_int[3],
+          15'b000000000000000, DB_int[2], 15'b000000000000000, DB_int[1], 15'b000000000000000, DB_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch1 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch1 = readLatch1;
-      QB_int = {shifted_readLatch1[23], shifted_readLatch1[22], shifted_readLatch1[21],
-        shifted_readLatch1[20], shifted_readLatch1[19], shifted_readLatch1[18], shifted_readLatch1[17],
-        shifted_readLatch1[16], shifted_readLatch1[15], shifted_readLatch1[14], shifted_readLatch1[13],
-        shifted_readLatch1[12], shifted_readLatch1[11], shifted_readLatch1[10], shifted_readLatch1[9],
-        shifted_readLatch1[8], shifted_readLatch1[7], shifted_readLatch1[6], shifted_readLatch1[5],
-        shifted_readLatch1[4], shifted_readLatch1[3], shifted_readLatch1[2], shifted_readLatch1[1],
+        readLatch1 = {data_out[124], data_out[120], data_out[116], data_out[112], data_out[108],
+          data_out[104], data_out[100], data_out[96], data_out[92], data_out[88], data_out[84],
+          data_out[80], data_out[76], data_out[72], data_out[68], data_out[64], data_out[60],
+          data_out[56], data_out[52], data_out[48], data_out[44], data_out[40], data_out[36],
+          data_out[32], data_out[28], data_out[24], data_out[20], data_out[16], data_out[12],
+          data_out[8], data_out[4], data_out[0]};
+      shifted_readLatch1 = (readLatch1 >> AB_int[3:2]);
+      QB_int = {shifted_readLatch1[28], shifted_readLatch1[24], shifted_readLatch1[20],
+        shifted_readLatch1[16], shifted_readLatch1[12], shifted_readLatch1[8], shifted_readLatch1[4],
         shifted_readLatch1[0]};
       end
     end
@@ -1089,25 +892,25 @@ task dumpmem;
   always @ RET1N_ begin
     if (CLKB_ == 1'b1) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end
     if (RET1N_ === 1'bx || RET1N_ === 1'bz) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_ === 1'b0 && RET1N_int === 1'b1 && (CENB_p2 === 1'b0 || TCENB_p2 === 1'b0) ) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_ === 1'b1 && RET1N_int === 1'b0 && (CENB_p2 === 1'b0 || TCENB_p2 === 1'b0) ) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end
     if (RET1N_ == 1'b0) begin
-      QB_int = {24{1'bx}};
-      QB_int_delayed = {24{1'bx}};
+      QB_int = {8{1'bx}};
+      QB_int_delayed = {8{1'bx}};
       CENB_int = 1'bx;
       WENB_int = 1'bx;
       AB_int = {9{1'bx}};
-      DB_int = {24{1'bx}};
+      DB_int = {8{1'bx}};
       EMAB_int = {3{1'bx}};
       EMAWB_int = {2{1'bx}};
       EMASB_int = 1'bx;
@@ -1116,18 +919,18 @@ task dumpmem;
       TCENB_int = 1'bx;
       TWENB_int = 1'bx;
       TAB_int = {9{1'bx}};
-      TDB_int = {24{1'bx}};
-      TQB_int = {24{1'bx}};
+      TDB_int = {8{1'bx}};
+      TQB_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVB_int = 1'bx;
       COLLDISN_int = 1'bx;
     end else begin
-      QB_int = {24{1'bx}};
-      QB_int_delayed = {24{1'bx}};
+      QB_int = {8{1'bx}};
+      QB_int_delayed = {8{1'bx}};
       CENB_int = 1'bx;
       WENB_int = 1'bx;
       AB_int = {9{1'bx}};
-      DB_int = {24{1'bx}};
+      DB_int = {8{1'bx}};
       EMAB_int = {3{1'bx}};
       EMAWB_int = {2{1'bx}};
       EMASB_int = 1'bx;
@@ -1136,8 +939,8 @@ task dumpmem;
       TCENB_int = 1'bx;
       TWENB_int = 1'bx;
       TAB_int = {9{1'bx}};
-      TDB_int = {24{1'bx}};
-      TQB_int = {24{1'bx}};
+      TDB_int = {8{1'bx}};
+      TQB_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVB_int = 1'bx;
       COLLDISN_int = 1'bx;
@@ -1161,7 +964,7 @@ task dumpmem;
   end else begin
     if ((CLKB_ === 1'bx || CLKB_ === 1'bz) && RET1N_ !== 1'b0) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (CLKB_ === 1'b1 && LAST_CLKB === 1'b0) begin
       CENB_int = TENB_ ? CENB_ : TCENB_;
       EMAB_int = EMAB_;
@@ -1181,10 +984,12 @@ task dumpmem;
         TCENB_int = TCENB_;
         TAB_int = TAB_;
         TDB_int = TDB_;
+        if (WENB_int === 1'b1)
+          read_mux_sel1 = (TENB_ ? AB_[3:2] : TAB_[3:2] );
       end
       clk1_int = 1'b0;
       if (CENB_int === 1'b0 && WENB_int === 1'b1) 
-         QB_int_delayed = {24{1'bx}};
+         QB_int_delayed = {8{1'bx}};
       if (CENB_int === 1'b0) previous_CLKB = $realtime;
     readWriteB;
     #0;
@@ -1204,9 +1009,9 @@ task dumpmem;
           $display("%s contention: both writes fail in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           WRITE_WRITE = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
 	      end
         end else if (WENA_int !== 1'b1) begin
@@ -1214,14 +1019,14 @@ task dumpmem;
           $display("%s contention: write A succeeds, read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
 		end
         end else if (WENB_int !== 1'b1) begin
 		if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: write B succeeds, read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
 		end
         end else begin
           readWriteA;
@@ -1261,13 +1066,13 @@ task dumpmem;
         if (WENA_int !== 1'b1) begin
           $display("%s contention: write A fails in %m at %0t",ASSERT_PREFIX, $time);
           WRITE_WRITE_1 = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE_1 = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
         end else begin
           readWriteA;
           $display("%s contention: read A succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -1282,7 +1087,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read B fails in %m at %0t",ASSERT_PREFIX, $time);
@@ -1291,7 +1096,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
         end else begin
           readWriteB;
           $display("%s contention: read B succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -1319,8 +1124,8 @@ task dumpmem;
     reg anyWrite;
   begin
     anyWrite = ((& wena) === 1'b1 && (& wenb) === 1'b1) ? 1'b0 : 1'b1;
-    sameMux = (aa[1:0] == ab[1:0]) ? 1'b1 : 1'b0;
-    if (aa[8:2] == ab[8:2]) begin
+    sameMux = (aa[3:0] == ab[3:0]) ? 1'b1 : 1'b0;
+    if (aa[8:4] == ab[8:4]) begin
       sameRow = 1'b1;
     end else begin
       sameRow = 1'b0;
@@ -1338,7 +1143,7 @@ task dumpmem;
     input [8:0] aa;
     input [8:0] ab;
   begin
-    if (aa[1:0] == ab[1:0])
+    if (aa[3:0] == ab[3:0])
       col_contention = 1'b1;
     else
       col_contention = 1'b0;
@@ -1370,24 +1175,24 @@ endmodule
 `celldefine
 // If POWER_PINS is defined at Simulator Command Line, it selects the module definition with Power Ports
 `ifdef POWER_PINS
-module sram_dp_dstFrame (VDDCE, VDDPE, VSSE, CENYA, WENYA, AYA, DYA, CENYB, WENYB,
-    AYB, DYB, QA, QB, CLKA, CENA, WENA, AA, DA, CLKB, CENB, WENB, AB, DB, EMAA, EMAWA,
-    EMASA, EMAB, EMAWB, EMASB, TENA, BENA, TCENA, TWENA, TAA, TDA, TQA, TENB, BENB,
-    TCENB, TWENB, TAB, TDB, TQB, RET1N, STOVA, STOVB, COLLDISN);
+module sram_dp_desc_8 (VDDCE, VDDPE, VSSE, CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB,
+    DYB, QA, QB, CLKA, CENA, WENA, AA, DA, CLKB, CENB, WENB, AB, DB, EMAA, EMAWA, EMASA,
+    EMAB, EMAWB, EMASB, TENA, BENA, TCENA, TWENA, TAA, TDA, TQA, TENB, BENB, TCENB,
+    TWENB, TAB, TDB, TQB, RET1N, STOVA, STOVB, COLLDISN);
 `else
-module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB, CLKA,
+module sram_dp_desc_8 (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB, CLKA,
     CENA, WENA, AA, DA, CLKB, CENB, WENB, AB, DB, EMAA, EMAWA, EMASA, EMAB, EMAWB,
     EMASB, TENA, BENA, TCENA, TWENA, TAA, TDA, TQA, TENB, BENB, TCENB, TWENB, TAB,
     TDB, TQB, RET1N, STOVA, STOVB, COLLDISN);
 `endif
 
   parameter ASSERT_PREFIX = "";
-  parameter BITS = 24;
-  parameter WORDS = 320;
-  parameter MUX = 4;
-  parameter MEM_WIDTH = 96; // redun block size 4, 48 on left, 48 on right
-  parameter MEM_HEIGHT = 80;
-  parameter WP_SIZE = 24 ;
+  parameter BITS = 8;
+  parameter WORDS = 512;
+  parameter MUX = 16;
+  parameter MEM_WIDTH = 128; // redun block size 4, 64 on left, 64 on right
+  parameter MEM_HEIGHT = 32;
+  parameter WP_SIZE = 8 ;
   parameter UPM_WIDTH = 3;
   parameter UPMW_WIDTH = 2;
   parameter UPMS_WIDTH = 1;
@@ -1395,23 +1200,23 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   output  CENYA;
   output  WENYA;
   output [8:0] AYA;
-  output [23:0] DYA;
+  output [7:0] DYA;
   output  CENYB;
   output  WENYB;
   output [8:0] AYB;
-  output [23:0] DYB;
-  output [23:0] QA;
-  output [23:0] QB;
+  output [7:0] DYB;
+  output [7:0] QA;
+  output [7:0] QB;
   input  CLKA;
   input  CENA;
   input  WENA;
   input [8:0] AA;
-  input [23:0] DA;
+  input [7:0] DA;
   input  CLKB;
   input  CENB;
   input  WENB;
   input [8:0] AB;
-  input [23:0] DB;
+  input [7:0] DB;
   input [2:0] EMAA;
   input [1:0] EMAWA;
   input  EMASA;
@@ -1423,15 +1228,15 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   input  TCENA;
   input  TWENA;
   input [8:0] TAA;
-  input [23:0] TDA;
-  input [23:0] TQA;
+  input [7:0] TDA;
+  input [7:0] TQA;
   input  TENB;
   input  BENB;
   input  TCENB;
   input  TWENB;
   input [8:0] TAB;
-  input [23:0] TDB;
-  input [23:0] TQB;
+  input [7:0] TDB;
+  input [7:0] TQB;
   input  RET1N;
   input  STOVA;
   input  STOVB;
@@ -1444,22 +1249,24 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
 
   integer row_address;
   integer mux_address;
-  reg [95:0] mem [0:79];
-  reg [95:0] row;
+  reg [127:0] mem [0:31];
+  reg [127:0] row;
   reg LAST_CLKA;
-  reg [95:0] row_mask;
-  reg [95:0] new_data;
-  reg [95:0] data_out;
-  reg [23:0] readLatch0;
-  reg [23:0] shifted_readLatch0;
-  reg [23:0] readLatch1;
-  reg [23:0] shifted_readLatch1;
+  reg [127:0] row_mask;
+  reg [127:0] new_data;
+  reg [127:0] data_out;
+  reg [31:0] readLatch0;
+  reg [31:0] shifted_readLatch0;
+  reg [1:0] read_mux_sel0;
+  reg [31:0] readLatch1;
+  reg [31:0] shifted_readLatch1;
+  reg [1:0] read_mux_sel1;
   reg LAST_CLKB;
-  reg [23:0] QA_int;
-  reg [23:0] QA_int_delayed;
-  reg [23:0] QB_int;
-  reg [23:0] QB_int_delayed;
-  reg [23:0] writeEnable;
+  reg [7:0] QA_int;
+  reg [7:0] QA_int_delayed;
+  reg [7:0] QB_int;
+  reg [7:0] QB_int_delayed;
+  reg [7:0] writeEnable;
   real previous_CLKA;
   real previous_CLKB;
   initial previous_CLKA = 0;
@@ -1472,25 +1279,17 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   initial cont_flag1_int = 1'b0;
 
   reg NOT_CENA, NOT_WENA, NOT_AA8, NOT_AA7, NOT_AA6, NOT_AA5, NOT_AA4, NOT_AA3, NOT_AA2;
-  reg NOT_AA1, NOT_AA0, NOT_DA23, NOT_DA22, NOT_DA21, NOT_DA20, NOT_DA19, NOT_DA18;
-  reg NOT_DA17, NOT_DA16, NOT_DA15, NOT_DA14, NOT_DA13, NOT_DA12, NOT_DA11, NOT_DA10;
-  reg NOT_DA9, NOT_DA8, NOT_DA7, NOT_DA6, NOT_DA5, NOT_DA4, NOT_DA3, NOT_DA2, NOT_DA1;
+  reg NOT_AA1, NOT_AA0, NOT_DA7, NOT_DA6, NOT_DA5, NOT_DA4, NOT_DA3, NOT_DA2, NOT_DA1;
   reg NOT_DA0, NOT_CENB, NOT_WENB, NOT_AB8, NOT_AB7, NOT_AB6, NOT_AB5, NOT_AB4, NOT_AB3;
-  reg NOT_AB2, NOT_AB1, NOT_AB0, NOT_DB23, NOT_DB22, NOT_DB21, NOT_DB20, NOT_DB19;
-  reg NOT_DB18, NOT_DB17, NOT_DB16, NOT_DB15, NOT_DB14, NOT_DB13, NOT_DB12, NOT_DB11;
-  reg NOT_DB10, NOT_DB9, NOT_DB8, NOT_DB7, NOT_DB6, NOT_DB5, NOT_DB4, NOT_DB3, NOT_DB2;
+  reg NOT_AB2, NOT_AB1, NOT_AB0, NOT_DB7, NOT_DB6, NOT_DB5, NOT_DB4, NOT_DB3, NOT_DB2;
   reg NOT_DB1, NOT_DB0, NOT_EMAA2, NOT_EMAA1, NOT_EMAA0, NOT_EMAWA1, NOT_EMAWA0, NOT_EMASA;
   reg NOT_EMAB2, NOT_EMAB1, NOT_EMAB0, NOT_EMAWB1, NOT_EMAWB0, NOT_EMASB, NOT_TENA;
   reg NOT_TCENA, NOT_TWENA, NOT_TAA8, NOT_TAA7, NOT_TAA6, NOT_TAA5, NOT_TAA4, NOT_TAA3;
-  reg NOT_TAA2, NOT_TAA1, NOT_TAA0, NOT_TDA23, NOT_TDA22, NOT_TDA21, NOT_TDA20, NOT_TDA19;
-  reg NOT_TDA18, NOT_TDA17, NOT_TDA16, NOT_TDA15, NOT_TDA14, NOT_TDA13, NOT_TDA12;
-  reg NOT_TDA11, NOT_TDA10, NOT_TDA9, NOT_TDA8, NOT_TDA7, NOT_TDA6, NOT_TDA5, NOT_TDA4;
-  reg NOT_TDA3, NOT_TDA2, NOT_TDA1, NOT_TDA0, NOT_TENB, NOT_TCENB, NOT_TWENB, NOT_TAB8;
-  reg NOT_TAB7, NOT_TAB6, NOT_TAB5, NOT_TAB4, NOT_TAB3, NOT_TAB2, NOT_TAB1, NOT_TAB0;
-  reg NOT_TDB23, NOT_TDB22, NOT_TDB21, NOT_TDB20, NOT_TDB19, NOT_TDB18, NOT_TDB17;
-  reg NOT_TDB16, NOT_TDB15, NOT_TDB14, NOT_TDB13, NOT_TDB12, NOT_TDB11, NOT_TDB10;
-  reg NOT_TDB9, NOT_TDB8, NOT_TDB7, NOT_TDB6, NOT_TDB5, NOT_TDB4, NOT_TDB3, NOT_TDB2;
-  reg NOT_TDB1, NOT_TDB0, NOT_RET1N, NOT_STOVA, NOT_STOVB, NOT_COLLDISN;
+  reg NOT_TAA2, NOT_TAA1, NOT_TAA0, NOT_TDA7, NOT_TDA6, NOT_TDA5, NOT_TDA4, NOT_TDA3;
+  reg NOT_TDA2, NOT_TDA1, NOT_TDA0, NOT_TENB, NOT_TCENB, NOT_TWENB, NOT_TAB8, NOT_TAB7;
+  reg NOT_TAB6, NOT_TAB5, NOT_TAB4, NOT_TAB3, NOT_TAB2, NOT_TAB1, NOT_TAB0, NOT_TDB7;
+  reg NOT_TDB6, NOT_TDB5, NOT_TDB4, NOT_TDB3, NOT_TDB2, NOT_TDB1, NOT_TDB0, NOT_RET1N;
+  reg NOT_STOVA, NOT_STOVB, NOT_COLLDISN;
   reg NOT_CONTA, NOT_CLKA_PER, NOT_CLKA_MINH, NOT_CLKA_MINL, NOT_CONTB, NOT_CLKB_PER;
   reg NOT_CLKB_MINH, NOT_CLKB_MINL;
   reg clk0_int;
@@ -1499,13 +1298,13 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   wire  CENYA_;
   wire  WENYA_;
   wire [8:0] AYA_;
-  wire [23:0] DYA_;
+  wire [7:0] DYA_;
   wire  CENYB_;
   wire  WENYB_;
   wire [8:0] AYB_;
-  wire [23:0] DYB_;
-  wire [23:0] QA_;
-  wire [23:0] QB_;
+  wire [7:0] DYB_;
+  wire [7:0] QA_;
+  wire [7:0] QB_;
  wire  CLKA_;
   wire  CENA_;
   reg  CENA_int;
@@ -1514,8 +1313,8 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  WENA_int;
   wire [8:0] AA_;
   reg [8:0] AA_int;
-  wire [23:0] DA_;
-  reg [23:0] DA_int;
+  wire [7:0] DA_;
+  reg [7:0] DA_int;
  wire  CLKB_;
   wire  CENB_;
   reg  CENB_int;
@@ -1524,8 +1323,8 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  WENB_int;
   wire [8:0] AB_;
   reg [8:0] AB_int;
-  wire [23:0] DB_;
-  reg [23:0] DB_int;
+  wire [7:0] DB_;
+  reg [7:0] DB_int;
   wire [2:0] EMAA_;
   reg [2:0] EMAA_int;
   wire [1:0] EMAWA_;
@@ -1549,10 +1348,10 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  TWENA_int;
   wire [8:0] TAA_;
   reg [8:0] TAA_int;
-  wire [23:0] TDA_;
-  reg [23:0] TDA_int;
-  wire [23:0] TQA_;
-  reg [23:0] TQA_int;
+  wire [7:0] TDA_;
+  reg [7:0] TDA_int;
+  wire [7:0] TQA_;
+  reg [7:0] TQA_int;
   wire  TENB_;
   reg  TENB_int;
   wire  BENB_;
@@ -1564,10 +1363,10 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   reg  TWENB_int;
   wire [8:0] TAB_;
   reg [8:0] TAB_int;
-  wire [23:0] TDB_;
-  reg [23:0] TDB_int;
-  wire [23:0] TQB_;
-  reg [23:0] TQB_int;
+  wire [7:0] TDB_;
+  reg [7:0] TDB_int;
+  wire [7:0] TQB_;
+  reg [7:0] TQB_int;
   wire  RET1N_;
   reg  RET1N_int;
   wire  STOVA_;
@@ -1596,330 +1395,170 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   buf B16(DYA[5], DYA_[5]);
   buf B17(DYA[6], DYA_[6]);
   buf B18(DYA[7], DYA_[7]);
-  buf B19(DYA[8], DYA_[8]);
-  buf B20(DYA[9], DYA_[9]);
-  buf B21(DYA[10], DYA_[10]);
-  buf B22(DYA[11], DYA_[11]);
-  buf B23(DYA[12], DYA_[12]);
-  buf B24(DYA[13], DYA_[13]);
-  buf B25(DYA[14], DYA_[14]);
-  buf B26(DYA[15], DYA_[15]);
-  buf B27(DYA[16], DYA_[16]);
-  buf B28(DYA[17], DYA_[17]);
-  buf B29(DYA[18], DYA_[18]);
-  buf B30(DYA[19], DYA_[19]);
-  buf B31(DYA[20], DYA_[20]);
-  buf B32(DYA[21], DYA_[21]);
-  buf B33(DYA[22], DYA_[22]);
-  buf B34(DYA[23], DYA_[23]);
-  buf B35(CENYB, CENYB_);
-  buf B36(WENYB, WENYB_);
-  buf B37(AYB[0], AYB_[0]);
-  buf B38(AYB[1], AYB_[1]);
-  buf B39(AYB[2], AYB_[2]);
-  buf B40(AYB[3], AYB_[3]);
-  buf B41(AYB[4], AYB_[4]);
-  buf B42(AYB[5], AYB_[5]);
-  buf B43(AYB[6], AYB_[6]);
-  buf B44(AYB[7], AYB_[7]);
-  buf B45(AYB[8], AYB_[8]);
-  buf B46(DYB[0], DYB_[0]);
-  buf B47(DYB[1], DYB_[1]);
-  buf B48(DYB[2], DYB_[2]);
-  buf B49(DYB[3], DYB_[3]);
-  buf B50(DYB[4], DYB_[4]);
-  buf B51(DYB[5], DYB_[5]);
-  buf B52(DYB[6], DYB_[6]);
-  buf B53(DYB[7], DYB_[7]);
-  buf B54(DYB[8], DYB_[8]);
-  buf B55(DYB[9], DYB_[9]);
-  buf B56(DYB[10], DYB_[10]);
-  buf B57(DYB[11], DYB_[11]);
-  buf B58(DYB[12], DYB_[12]);
-  buf B59(DYB[13], DYB_[13]);
-  buf B60(DYB[14], DYB_[14]);
-  buf B61(DYB[15], DYB_[15]);
-  buf B62(DYB[16], DYB_[16]);
-  buf B63(DYB[17], DYB_[17]);
-  buf B64(DYB[18], DYB_[18]);
-  buf B65(DYB[19], DYB_[19]);
-  buf B66(DYB[20], DYB_[20]);
-  buf B67(DYB[21], DYB_[21]);
-  buf B68(DYB[22], DYB_[22]);
-  buf B69(DYB[23], DYB_[23]);
-  buf B70(QA[0], QA_[0]);
-  buf B71(QA[1], QA_[1]);
-  buf B72(QA[2], QA_[2]);
-  buf B73(QA[3], QA_[3]);
-  buf B74(QA[4], QA_[4]);
-  buf B75(QA[5], QA_[5]);
-  buf B76(QA[6], QA_[6]);
-  buf B77(QA[7], QA_[7]);
-  buf B78(QA[8], QA_[8]);
-  buf B79(QA[9], QA_[9]);
-  buf B80(QA[10], QA_[10]);
-  buf B81(QA[11], QA_[11]);
-  buf B82(QA[12], QA_[12]);
-  buf B83(QA[13], QA_[13]);
-  buf B84(QA[14], QA_[14]);
-  buf B85(QA[15], QA_[15]);
-  buf B86(QA[16], QA_[16]);
-  buf B87(QA[17], QA_[17]);
-  buf B88(QA[18], QA_[18]);
-  buf B89(QA[19], QA_[19]);
-  buf B90(QA[20], QA_[20]);
-  buf B91(QA[21], QA_[21]);
-  buf B92(QA[22], QA_[22]);
-  buf B93(QA[23], QA_[23]);
-  buf B94(QB[0], QB_[0]);
-  buf B95(QB[1], QB_[1]);
-  buf B96(QB[2], QB_[2]);
-  buf B97(QB[3], QB_[3]);
-  buf B98(QB[4], QB_[4]);
-  buf B99(QB[5], QB_[5]);
-  buf B100(QB[6], QB_[6]);
-  buf B101(QB[7], QB_[7]);
-  buf B102(QB[8], QB_[8]);
-  buf B103(QB[9], QB_[9]);
-  buf B104(QB[10], QB_[10]);
-  buf B105(QB[11], QB_[11]);
-  buf B106(QB[12], QB_[12]);
-  buf B107(QB[13], QB_[13]);
-  buf B108(QB[14], QB_[14]);
-  buf B109(QB[15], QB_[15]);
-  buf B110(QB[16], QB_[16]);
-  buf B111(QB[17], QB_[17]);
-  buf B112(QB[18], QB_[18]);
-  buf B113(QB[19], QB_[19]);
-  buf B114(QB[20], QB_[20]);
-  buf B115(QB[21], QB_[21]);
-  buf B116(QB[22], QB_[22]);
-  buf B117(QB[23], QB_[23]);
-  buf B118(CLKA_, CLKA);
-  buf B119(CENA_, CENA);
-  buf B120(WENA_, WENA);
-  buf B121(AA_[0], AA[0]);
-  buf B122(AA_[1], AA[1]);
-  buf B123(AA_[2], AA[2]);
-  buf B124(AA_[3], AA[3]);
-  buf B125(AA_[4], AA[4]);
-  buf B126(AA_[5], AA[5]);
-  buf B127(AA_[6], AA[6]);
-  buf B128(AA_[7], AA[7]);
-  buf B129(AA_[8], AA[8]);
-  buf B130(DA_[0], DA[0]);
-  buf B131(DA_[1], DA[1]);
-  buf B132(DA_[2], DA[2]);
-  buf B133(DA_[3], DA[3]);
-  buf B134(DA_[4], DA[4]);
-  buf B135(DA_[5], DA[5]);
-  buf B136(DA_[6], DA[6]);
-  buf B137(DA_[7], DA[7]);
-  buf B138(DA_[8], DA[8]);
-  buf B139(DA_[9], DA[9]);
-  buf B140(DA_[10], DA[10]);
-  buf B141(DA_[11], DA[11]);
-  buf B142(DA_[12], DA[12]);
-  buf B143(DA_[13], DA[13]);
-  buf B144(DA_[14], DA[14]);
-  buf B145(DA_[15], DA[15]);
-  buf B146(DA_[16], DA[16]);
-  buf B147(DA_[17], DA[17]);
-  buf B148(DA_[18], DA[18]);
-  buf B149(DA_[19], DA[19]);
-  buf B150(DA_[20], DA[20]);
-  buf B151(DA_[21], DA[21]);
-  buf B152(DA_[22], DA[22]);
-  buf B153(DA_[23], DA[23]);
-  buf B154(CLKB_, CLKB);
-  buf B155(CENB_, CENB);
-  buf B156(WENB_, WENB);
-  buf B157(AB_[0], AB[0]);
-  buf B158(AB_[1], AB[1]);
-  buf B159(AB_[2], AB[2]);
-  buf B160(AB_[3], AB[3]);
-  buf B161(AB_[4], AB[4]);
-  buf B162(AB_[5], AB[5]);
-  buf B163(AB_[6], AB[6]);
-  buf B164(AB_[7], AB[7]);
-  buf B165(AB_[8], AB[8]);
-  buf B166(DB_[0], DB[0]);
-  buf B167(DB_[1], DB[1]);
-  buf B168(DB_[2], DB[2]);
-  buf B169(DB_[3], DB[3]);
-  buf B170(DB_[4], DB[4]);
-  buf B171(DB_[5], DB[5]);
-  buf B172(DB_[6], DB[6]);
-  buf B173(DB_[7], DB[7]);
-  buf B174(DB_[8], DB[8]);
-  buf B175(DB_[9], DB[9]);
-  buf B176(DB_[10], DB[10]);
-  buf B177(DB_[11], DB[11]);
-  buf B178(DB_[12], DB[12]);
-  buf B179(DB_[13], DB[13]);
-  buf B180(DB_[14], DB[14]);
-  buf B181(DB_[15], DB[15]);
-  buf B182(DB_[16], DB[16]);
-  buf B183(DB_[17], DB[17]);
-  buf B184(DB_[18], DB[18]);
-  buf B185(DB_[19], DB[19]);
-  buf B186(DB_[20], DB[20]);
-  buf B187(DB_[21], DB[21]);
-  buf B188(DB_[22], DB[22]);
-  buf B189(DB_[23], DB[23]);
-  buf B190(EMAA_[0], EMAA[0]);
-  buf B191(EMAA_[1], EMAA[1]);
-  buf B192(EMAA_[2], EMAA[2]);
-  buf B193(EMAWA_[0], EMAWA[0]);
-  buf B194(EMAWA_[1], EMAWA[1]);
-  buf B195(EMASA_, EMASA);
-  buf B196(EMAB_[0], EMAB[0]);
-  buf B197(EMAB_[1], EMAB[1]);
-  buf B198(EMAB_[2], EMAB[2]);
-  buf B199(EMAWB_[0], EMAWB[0]);
-  buf B200(EMAWB_[1], EMAWB[1]);
-  buf B201(EMASB_, EMASB);
-  buf B202(TENA_, TENA);
-  buf B203(BENA_, BENA);
-  buf B204(TCENA_, TCENA);
-  buf B205(TWENA_, TWENA);
-  buf B206(TAA_[0], TAA[0]);
-  buf B207(TAA_[1], TAA[1]);
-  buf B208(TAA_[2], TAA[2]);
-  buf B209(TAA_[3], TAA[3]);
-  buf B210(TAA_[4], TAA[4]);
-  buf B211(TAA_[5], TAA[5]);
-  buf B212(TAA_[6], TAA[6]);
-  buf B213(TAA_[7], TAA[7]);
-  buf B214(TAA_[8], TAA[8]);
-  buf B215(TDA_[0], TDA[0]);
-  buf B216(TDA_[1], TDA[1]);
-  buf B217(TDA_[2], TDA[2]);
-  buf B218(TDA_[3], TDA[3]);
-  buf B219(TDA_[4], TDA[4]);
-  buf B220(TDA_[5], TDA[5]);
-  buf B221(TDA_[6], TDA[6]);
-  buf B222(TDA_[7], TDA[7]);
-  buf B223(TDA_[8], TDA[8]);
-  buf B224(TDA_[9], TDA[9]);
-  buf B225(TDA_[10], TDA[10]);
-  buf B226(TDA_[11], TDA[11]);
-  buf B227(TDA_[12], TDA[12]);
-  buf B228(TDA_[13], TDA[13]);
-  buf B229(TDA_[14], TDA[14]);
-  buf B230(TDA_[15], TDA[15]);
-  buf B231(TDA_[16], TDA[16]);
-  buf B232(TDA_[17], TDA[17]);
-  buf B233(TDA_[18], TDA[18]);
-  buf B234(TDA_[19], TDA[19]);
-  buf B235(TDA_[20], TDA[20]);
-  buf B236(TDA_[21], TDA[21]);
-  buf B237(TDA_[22], TDA[22]);
-  buf B238(TDA_[23], TDA[23]);
-  buf B239(TQA_[0], TQA[0]);
-  buf B240(TQA_[1], TQA[1]);
-  buf B241(TQA_[2], TQA[2]);
-  buf B242(TQA_[3], TQA[3]);
-  buf B243(TQA_[4], TQA[4]);
-  buf B244(TQA_[5], TQA[5]);
-  buf B245(TQA_[6], TQA[6]);
-  buf B246(TQA_[7], TQA[7]);
-  buf B247(TQA_[8], TQA[8]);
-  buf B248(TQA_[9], TQA[9]);
-  buf B249(TQA_[10], TQA[10]);
-  buf B250(TQA_[11], TQA[11]);
-  buf B251(TQA_[12], TQA[12]);
-  buf B252(TQA_[13], TQA[13]);
-  buf B253(TQA_[14], TQA[14]);
-  buf B254(TQA_[15], TQA[15]);
-  buf B255(TQA_[16], TQA[16]);
-  buf B256(TQA_[17], TQA[17]);
-  buf B257(TQA_[18], TQA[18]);
-  buf B258(TQA_[19], TQA[19]);
-  buf B259(TQA_[20], TQA[20]);
-  buf B260(TQA_[21], TQA[21]);
-  buf B261(TQA_[22], TQA[22]);
-  buf B262(TQA_[23], TQA[23]);
-  buf B263(TENB_, TENB);
-  buf B264(BENB_, BENB);
-  buf B265(TCENB_, TCENB);
-  buf B266(TWENB_, TWENB);
-  buf B267(TAB_[0], TAB[0]);
-  buf B268(TAB_[1], TAB[1]);
-  buf B269(TAB_[2], TAB[2]);
-  buf B270(TAB_[3], TAB[3]);
-  buf B271(TAB_[4], TAB[4]);
-  buf B272(TAB_[5], TAB[5]);
-  buf B273(TAB_[6], TAB[6]);
-  buf B274(TAB_[7], TAB[7]);
-  buf B275(TAB_[8], TAB[8]);
-  buf B276(TDB_[0], TDB[0]);
-  buf B277(TDB_[1], TDB[1]);
-  buf B278(TDB_[2], TDB[2]);
-  buf B279(TDB_[3], TDB[3]);
-  buf B280(TDB_[4], TDB[4]);
-  buf B281(TDB_[5], TDB[5]);
-  buf B282(TDB_[6], TDB[6]);
-  buf B283(TDB_[7], TDB[7]);
-  buf B284(TDB_[8], TDB[8]);
-  buf B285(TDB_[9], TDB[9]);
-  buf B286(TDB_[10], TDB[10]);
-  buf B287(TDB_[11], TDB[11]);
-  buf B288(TDB_[12], TDB[12]);
-  buf B289(TDB_[13], TDB[13]);
-  buf B290(TDB_[14], TDB[14]);
-  buf B291(TDB_[15], TDB[15]);
-  buf B292(TDB_[16], TDB[16]);
-  buf B293(TDB_[17], TDB[17]);
-  buf B294(TDB_[18], TDB[18]);
-  buf B295(TDB_[19], TDB[19]);
-  buf B296(TDB_[20], TDB[20]);
-  buf B297(TDB_[21], TDB[21]);
-  buf B298(TDB_[22], TDB[22]);
-  buf B299(TDB_[23], TDB[23]);
-  buf B300(TQB_[0], TQB[0]);
-  buf B301(TQB_[1], TQB[1]);
-  buf B302(TQB_[2], TQB[2]);
-  buf B303(TQB_[3], TQB[3]);
-  buf B304(TQB_[4], TQB[4]);
-  buf B305(TQB_[5], TQB[5]);
-  buf B306(TQB_[6], TQB[6]);
-  buf B307(TQB_[7], TQB[7]);
-  buf B308(TQB_[8], TQB[8]);
-  buf B309(TQB_[9], TQB[9]);
-  buf B310(TQB_[10], TQB[10]);
-  buf B311(TQB_[11], TQB[11]);
-  buf B312(TQB_[12], TQB[12]);
-  buf B313(TQB_[13], TQB[13]);
-  buf B314(TQB_[14], TQB[14]);
-  buf B315(TQB_[15], TQB[15]);
-  buf B316(TQB_[16], TQB[16]);
-  buf B317(TQB_[17], TQB[17]);
-  buf B318(TQB_[18], TQB[18]);
-  buf B319(TQB_[19], TQB[19]);
-  buf B320(TQB_[20], TQB[20]);
-  buf B321(TQB_[21], TQB[21]);
-  buf B322(TQB_[22], TQB[22]);
-  buf B323(TQB_[23], TQB[23]);
-  buf B324(RET1N_, RET1N);
-  buf B325(STOVA_, STOVA);
-  buf B326(STOVB_, STOVB);
-  buf B327(COLLDISN_, COLLDISN);
+  buf B19(CENYB, CENYB_);
+  buf B20(WENYB, WENYB_);
+  buf B21(AYB[0], AYB_[0]);
+  buf B22(AYB[1], AYB_[1]);
+  buf B23(AYB[2], AYB_[2]);
+  buf B24(AYB[3], AYB_[3]);
+  buf B25(AYB[4], AYB_[4]);
+  buf B26(AYB[5], AYB_[5]);
+  buf B27(AYB[6], AYB_[6]);
+  buf B28(AYB[7], AYB_[7]);
+  buf B29(AYB[8], AYB_[8]);
+  buf B30(DYB[0], DYB_[0]);
+  buf B31(DYB[1], DYB_[1]);
+  buf B32(DYB[2], DYB_[2]);
+  buf B33(DYB[3], DYB_[3]);
+  buf B34(DYB[4], DYB_[4]);
+  buf B35(DYB[5], DYB_[5]);
+  buf B36(DYB[6], DYB_[6]);
+  buf B37(DYB[7], DYB_[7]);
+  buf B38(QA[0], QA_[0]);
+  buf B39(QA[1], QA_[1]);
+  buf B40(QA[2], QA_[2]);
+  buf B41(QA[3], QA_[3]);
+  buf B42(QA[4], QA_[4]);
+  buf B43(QA[5], QA_[5]);
+  buf B44(QA[6], QA_[6]);
+  buf B45(QA[7], QA_[7]);
+  buf B46(QB[0], QB_[0]);
+  buf B47(QB[1], QB_[1]);
+  buf B48(QB[2], QB_[2]);
+  buf B49(QB[3], QB_[3]);
+  buf B50(QB[4], QB_[4]);
+  buf B51(QB[5], QB_[5]);
+  buf B52(QB[6], QB_[6]);
+  buf B53(QB[7], QB_[7]);
+  buf B54(CLKA_, CLKA);
+  buf B55(CENA_, CENA);
+  buf B56(WENA_, WENA);
+  buf B57(AA_[0], AA[0]);
+  buf B58(AA_[1], AA[1]);
+  buf B59(AA_[2], AA[2]);
+  buf B60(AA_[3], AA[3]);
+  buf B61(AA_[4], AA[4]);
+  buf B62(AA_[5], AA[5]);
+  buf B63(AA_[6], AA[6]);
+  buf B64(AA_[7], AA[7]);
+  buf B65(AA_[8], AA[8]);
+  buf B66(DA_[0], DA[0]);
+  buf B67(DA_[1], DA[1]);
+  buf B68(DA_[2], DA[2]);
+  buf B69(DA_[3], DA[3]);
+  buf B70(DA_[4], DA[4]);
+  buf B71(DA_[5], DA[5]);
+  buf B72(DA_[6], DA[6]);
+  buf B73(DA_[7], DA[7]);
+  buf B74(CLKB_, CLKB);
+  buf B75(CENB_, CENB);
+  buf B76(WENB_, WENB);
+  buf B77(AB_[0], AB[0]);
+  buf B78(AB_[1], AB[1]);
+  buf B79(AB_[2], AB[2]);
+  buf B80(AB_[3], AB[3]);
+  buf B81(AB_[4], AB[4]);
+  buf B82(AB_[5], AB[5]);
+  buf B83(AB_[6], AB[6]);
+  buf B84(AB_[7], AB[7]);
+  buf B85(AB_[8], AB[8]);
+  buf B86(DB_[0], DB[0]);
+  buf B87(DB_[1], DB[1]);
+  buf B88(DB_[2], DB[2]);
+  buf B89(DB_[3], DB[3]);
+  buf B90(DB_[4], DB[4]);
+  buf B91(DB_[5], DB[5]);
+  buf B92(DB_[6], DB[6]);
+  buf B93(DB_[7], DB[7]);
+  buf B94(EMAA_[0], EMAA[0]);
+  buf B95(EMAA_[1], EMAA[1]);
+  buf B96(EMAA_[2], EMAA[2]);
+  buf B97(EMAWA_[0], EMAWA[0]);
+  buf B98(EMAWA_[1], EMAWA[1]);
+  buf B99(EMASA_, EMASA);
+  buf B100(EMAB_[0], EMAB[0]);
+  buf B101(EMAB_[1], EMAB[1]);
+  buf B102(EMAB_[2], EMAB[2]);
+  buf B103(EMAWB_[0], EMAWB[0]);
+  buf B104(EMAWB_[1], EMAWB[1]);
+  buf B105(EMASB_, EMASB);
+  buf B106(TENA_, TENA);
+  buf B107(BENA_, BENA);
+  buf B108(TCENA_, TCENA);
+  buf B109(TWENA_, TWENA);
+  buf B110(TAA_[0], TAA[0]);
+  buf B111(TAA_[1], TAA[1]);
+  buf B112(TAA_[2], TAA[2]);
+  buf B113(TAA_[3], TAA[3]);
+  buf B114(TAA_[4], TAA[4]);
+  buf B115(TAA_[5], TAA[5]);
+  buf B116(TAA_[6], TAA[6]);
+  buf B117(TAA_[7], TAA[7]);
+  buf B118(TAA_[8], TAA[8]);
+  buf B119(TDA_[0], TDA[0]);
+  buf B120(TDA_[1], TDA[1]);
+  buf B121(TDA_[2], TDA[2]);
+  buf B122(TDA_[3], TDA[3]);
+  buf B123(TDA_[4], TDA[4]);
+  buf B124(TDA_[5], TDA[5]);
+  buf B125(TDA_[6], TDA[6]);
+  buf B126(TDA_[7], TDA[7]);
+  buf B127(TQA_[0], TQA[0]);
+  buf B128(TQA_[1], TQA[1]);
+  buf B129(TQA_[2], TQA[2]);
+  buf B130(TQA_[3], TQA[3]);
+  buf B131(TQA_[4], TQA[4]);
+  buf B132(TQA_[5], TQA[5]);
+  buf B133(TQA_[6], TQA[6]);
+  buf B134(TQA_[7], TQA[7]);
+  buf B135(TENB_, TENB);
+  buf B136(BENB_, BENB);
+  buf B137(TCENB_, TCENB);
+  buf B138(TWENB_, TWENB);
+  buf B139(TAB_[0], TAB[0]);
+  buf B140(TAB_[1], TAB[1]);
+  buf B141(TAB_[2], TAB[2]);
+  buf B142(TAB_[3], TAB[3]);
+  buf B143(TAB_[4], TAB[4]);
+  buf B144(TAB_[5], TAB[5]);
+  buf B145(TAB_[6], TAB[6]);
+  buf B146(TAB_[7], TAB[7]);
+  buf B147(TAB_[8], TAB[8]);
+  buf B148(TDB_[0], TDB[0]);
+  buf B149(TDB_[1], TDB[1]);
+  buf B150(TDB_[2], TDB[2]);
+  buf B151(TDB_[3], TDB[3]);
+  buf B152(TDB_[4], TDB[4]);
+  buf B153(TDB_[5], TDB[5]);
+  buf B154(TDB_[6], TDB[6]);
+  buf B155(TDB_[7], TDB[7]);
+  buf B156(TQB_[0], TQB[0]);
+  buf B157(TQB_[1], TQB[1]);
+  buf B158(TQB_[2], TQB[2]);
+  buf B159(TQB_[3], TQB[3]);
+  buf B160(TQB_[4], TQB[4]);
+  buf B161(TQB_[5], TQB[5]);
+  buf B162(TQB_[6], TQB[6]);
+  buf B163(TQB_[7], TQB[7]);
+  buf B164(RET1N_, RET1N);
+  buf B165(STOVA_, STOVA);
+  buf B166(STOVB_, STOVB);
+  buf B167(COLLDISN_, COLLDISN);
 
   assign CENYA_ = RET1N_ ? (TENA_ ? CENA_ : TCENA_) : 1'bx;
   assign WENYA_ = RET1N_ ? (TENA_ ? WENA_ : TWENA_) : 1'bx;
   assign AYA_ = RET1N_ ? (TENA_ ? AA_ : TAA_) : {9{1'bx}};
-  assign DYA_ = RET1N_ ? (TENA_ ? DA_ : TDA_) : {24{1'bx}};
+  assign DYA_ = RET1N_ ? (TENA_ ? DA_ : TDA_) : {8{1'bx}};
   assign CENYB_ = RET1N_ ? (TENB_ ? CENB_ : TCENB_) : 1'bx;
   assign WENYB_ = RET1N_ ? (TENB_ ? WENB_ : TWENB_) : 1'bx;
   assign AYB_ = RET1N_ ? (TENB_ ? AB_ : TAB_) : {9{1'bx}};
-  assign DYB_ = RET1N_ ? (TENB_ ? DB_ : TDB_) : {24{1'bx}};
+  assign DYB_ = RET1N_ ? (TENB_ ? DB_ : TDB_) : {8{1'bx}};
    `ifdef ARM_FAULT_MODELING
-     sram_dp_dstFrame_error_injection u1(.CLK(CLKA_), .Q_out(QA_), .A(AA_int), .CEN(CENA_int), .TQ(TQA_), .BEN(BENA_), .WEN(WENA_int), .Q_in(QA_int));
+     sram_dp_desc_8_error_injection u1(.CLK(CLKA_), .Q_out(QA_), .A(AA_int), .CEN(CENA_int), .TQ(TQA_), .BEN(BENA_), .WEN(WENA_int), .Q_in(QA_int));
   `else
-  assign QA_ = RET1N_ ? (BENA_ ? ((STOVA_ ? (QA_int_delayed) : (QA_int))) : TQA_) : {24{1'bx}};
+  assign QA_ = RET1N_ ? (BENA_ ? ((STOVA_ ? (QA_int_delayed) : (QA_int))) : TQA_) : {8{1'bx}};
   `endif
-  assign QB_ = RET1N_ ? (BENB_ ? ((STOVB_ ? (QB_int_delayed) : (QB_int))) : TQB_) : {24{1'bx}};
+  assign QB_ = RET1N_ ? (BENB_ ? ((STOVB_ ? (QB_int_delayed) : (QB_int))) : TQB_) : {8{1'bx}};
 
 // If INITIALIZE_MEMORY is defined at Simulator Command Line, it Initializes the Memory with all ZEROS.
 `ifdef INITIALIZE_MEMORY
@@ -1958,25 +1597,17 @@ task loadmem;
 	  for (i=0;i<WORDS;i=i+1) begin
 	  wordtemp = memld[i];
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
-        writeEnable = {24{1'b1}};
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, wordtemp[23], 3'b000, wordtemp[22], 3'b000, wordtemp[21],
-          3'b000, wordtemp[20], 3'b000, wordtemp[19], 3'b000, wordtemp[18], 3'b000, wordtemp[17],
-          3'b000, wordtemp[16], 3'b000, wordtemp[15], 3'b000, wordtemp[14], 3'b000, wordtemp[13],
-          3'b000, wordtemp[12], 3'b000, wordtemp[11], 3'b000, wordtemp[10], 3'b000, wordtemp[9],
-          3'b000, wordtemp[8], 3'b000, wordtemp[7], 3'b000, wordtemp[6], 3'b000, wordtemp[5],
-          3'b000, wordtemp[4], 3'b000, wordtemp[3], 3'b000, wordtemp[2], 3'b000, wordtemp[1],
-          3'b000, wordtemp[0]} << mux_address);
+        writeEnable = {8{1'b1}};
+        row_mask =  ( {15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, wordtemp[7], 15'b000000000000000, wordtemp[6],
+          15'b000000000000000, wordtemp[5], 15'b000000000000000, wordtemp[4], 15'b000000000000000, wordtemp[3],
+          15'b000000000000000, wordtemp[2], 15'b000000000000000, wordtemp[1], 15'b000000000000000, wordtemp[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
   	end
@@ -1994,23 +1625,20 @@ task dumpmem;
      if (CENA_ === 1'b1 && CENB_ === 1'b1) begin
 	  for (i=0;i<WORDS;i=i+1) begin
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
-        writeEnable = {24{1'b1}};
+        writeEnable = {8{1'b1}};
         data_out = (row >> (mux_address));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
+        readLatch0 = {data_out[124], data_out[120], data_out[116], data_out[112], data_out[108],
+          data_out[104], data_out[100], data_out[96], data_out[92], data_out[88], data_out[84],
+          data_out[80], data_out[76], data_out[72], data_out[68], data_out[64], data_out[60],
+          data_out[56], data_out[52], data_out[48], data_out[44], data_out[40], data_out[36],
+          data_out[32], data_out[28], data_out[24], data_out[20], data_out[16], data_out[12],
+          data_out[8], data_out[4], data_out[0]};
       shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+      QA_int = {shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
    	$fdisplay(dump_file_desc, "%b", QA_int);
   end
@@ -2024,62 +1652,51 @@ task dumpmem;
   begin
     if (RET1N_int === 1'bx || RET1N_int === 1'bz) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0 && CENA_int === 1'b0) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0) begin
       // no cycle in retention mode
     end else if (^{CENA_int, EMAA_int, EMAWA_int, EMASA_int, RET1N_int, (STOVA_int 
      && !CENA_int)} === 1'bx) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if ((AA_int >= WORDS) && (CENA_int === 1'b0)) begin
-      QA_int = WENA_int !== 1'b1 ? QA_int : {24{1'bx}};
-      QA_int_delayed = WENA_int !== 1'b1 ? QA_int_delayed : {24{1'bx}};
+      QA_int = WENA_int !== 1'b1 ? QA_int : {8{1'bx}};
+      QA_int_delayed = WENA_int !== 1'b1 ? QA_int_delayed : {8{1'bx}};
     end else if (CENA_int === 1'b0 && (^AA_int) === 1'bx) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (CENA_int === 1'b0) begin
-      mux_address = (AA_int & 2'b11);
-      row_address = (AA_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AA_int & 4'b1111);
+      row_address = (AA_int >> 4);
+      if (row_address > 31)
+        row = {128{1'bx}};
       else
         row = mem[row_address];
-      writeEnable = ~{24{WENA_int}};
+      writeEnable = ~{8{WENA_int}};
       if (WENA_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DA_int[23], 3'b000, DA_int[22], 3'b000, DA_int[21],
-          3'b000, DA_int[20], 3'b000, DA_int[19], 3'b000, DA_int[18], 3'b000, DA_int[17],
-          3'b000, DA_int[16], 3'b000, DA_int[15], 3'b000, DA_int[14], 3'b000, DA_int[13],
-          3'b000, DA_int[12], 3'b000, DA_int[11], 3'b000, DA_int[10], 3'b000, DA_int[9],
-          3'b000, DA_int[8], 3'b000, DA_int[7], 3'b000, DA_int[6], 3'b000, DA_int[5],
-          3'b000, DA_int[4], 3'b000, DA_int[3], 3'b000, DA_int[2], 3'b000, DA_int[1],
-          3'b000, DA_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DA_int[7], 15'b000000000000000, DA_int[6],
+          15'b000000000000000, DA_int[5], 15'b000000000000000, DA_int[4], 15'b000000000000000, DA_int[3],
+          15'b000000000000000, DA_int[2], 15'b000000000000000, DA_int[1], 15'b000000000000000, DA_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+        readLatch0 = {data_out[124], data_out[120], data_out[116], data_out[112], data_out[108],
+          data_out[104], data_out[100], data_out[96], data_out[92], data_out[88], data_out[84],
+          data_out[80], data_out[76], data_out[72], data_out[68], data_out[64], data_out[60],
+          data_out[56], data_out[52], data_out[48], data_out[44], data_out[40], data_out[36],
+          data_out[32], data_out[28], data_out[24], data_out[20], data_out[16], data_out[12],
+          data_out[8], data_out[4], data_out[0]};
+      shifted_readLatch0 = (readLatch0 >> AA_int[3:2]);
+      QA_int = {shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
       end
     end
@@ -2095,25 +1712,25 @@ task dumpmem;
   always @ RET1N_ begin
     if (CLKA_ == 1'b1) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end
     if (RET1N_ === 1'bx || RET1N_ === 1'bz) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_ === 1'b0 && RET1N_int === 1'b1 && (CENA_p2 === 1'b0 || TCENA_p2 === 1'b0) ) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (RET1N_ === 1'b1 && RET1N_int === 1'b0 && (CENA_p2 === 1'b0 || TCENA_p2 === 1'b0) ) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end
     if (RET1N_ == 1'b0) begin
-      QA_int = {24{1'bx}};
-      QA_int_delayed = {24{1'bx}};
+      QA_int = {8{1'bx}};
+      QA_int_delayed = {8{1'bx}};
       CENA_int = 1'bx;
       WENA_int = 1'bx;
       AA_int = {9{1'bx}};
-      DA_int = {24{1'bx}};
+      DA_int = {8{1'bx}};
       EMAA_int = {3{1'bx}};
       EMAWA_int = {2{1'bx}};
       EMASA_int = 1'bx;
@@ -2122,18 +1739,18 @@ task dumpmem;
       TCENA_int = 1'bx;
       TWENA_int = 1'bx;
       TAA_int = {9{1'bx}};
-      TDA_int = {24{1'bx}};
-      TQA_int = {24{1'bx}};
+      TDA_int = {8{1'bx}};
+      TQA_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVA_int = 1'bx;
       COLLDISN_int = 1'bx;
     end else begin
-      QA_int = {24{1'bx}};
-      QA_int_delayed = {24{1'bx}};
+      QA_int = {8{1'bx}};
+      QA_int_delayed = {8{1'bx}};
       CENA_int = 1'bx;
       WENA_int = 1'bx;
       AA_int = {9{1'bx}};
-      DA_int = {24{1'bx}};
+      DA_int = {8{1'bx}};
       EMAA_int = {3{1'bx}};
       EMAWA_int = {2{1'bx}};
       EMASA_int = 1'bx;
@@ -2142,8 +1759,8 @@ task dumpmem;
       TCENA_int = 1'bx;
       TWENA_int = 1'bx;
       TAA_int = {9{1'bx}};
-      TDA_int = {24{1'bx}};
-      TQA_int = {24{1'bx}};
+      TDA_int = {8{1'bx}};
+      TQA_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVA_int = 1'bx;
       COLLDISN_int = 1'bx;
@@ -2167,7 +1784,7 @@ task dumpmem;
   end else begin
     if ((CLKA_ === 1'bx || CLKA_ === 1'bz) && RET1N_ !== 1'b0) begin
       failedWrite(0);
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
     end else if (CLKA_ === 1'b1 && LAST_CLKA === 1'b0) begin
       CENA_int = TENA_ ? CENA_ : TCENA_;
       EMAA_int = EMAA_;
@@ -2187,10 +1804,12 @@ task dumpmem;
         TCENA_int = TCENA_;
         TAA_int = TAA_;
         TDA_int = TDA_;
+        if (WENA_int === 1'b1)
+          read_mux_sel0 = (TENA_ ? AA_[3:2] : TAA_[3:2] );
       end
       clk0_int = 1'b0;
       if (CENA_int === 1'b0 && WENA_int === 1'b1) 
-         QA_int_delayed = {24{1'bx}};
+         QA_int_delayed = {8{1'bx}};
       if (CENA_int === 1'b0) previous_CLKA = $realtime;
     readWriteA;
     #0;
@@ -2210,9 +1829,9 @@ task dumpmem;
           $display("%s contention: both writes fail in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           WRITE_WRITE = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
 	      end
         end else if (WENA_int !== 1'b1) begin
@@ -2220,14 +1839,14 @@ task dumpmem;
           $display("%s contention: write A succeeds, read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
 		end
         end else if (WENB_int !== 1'b1) begin
 		if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: write B succeeds, read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
 		end
         end else begin
           readWriteB;
@@ -2267,13 +1886,13 @@ task dumpmem;
         if (WENB_int !== 1'b1) begin
           $display("%s contention: write B fails in %m at %0t",ASSERT_PREFIX, $time);
           WRITE_WRITE_1 = 1;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE_1 = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
         end else begin
           readWriteB;
           $display("%s contention: read B succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2288,7 +1907,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read A fails in %m at %0t",ASSERT_PREFIX, $time);
@@ -2297,7 +1916,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
         end else begin
           readWriteA;
           $display("%s contention: read A succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2323,7 +1942,7 @@ task dumpmem;
       EMAA_int[2] === 1'bx || EMASA_int === 1'bx || EMAWA_int[0] === 1'bx || EMAWA_int[1] === 1'bx || 
       RET1N_int === 1'bx || (STOVA_int && !CENA_int) === 1'bx || TENA_int === 1'bx || 
       clk0_int === 1'bx) begin
-      QA_int = {24{1'bx}};
+      QA_int = {8{1'bx}};
       failedWrite(0);
     end else if  (cont_flag0_int === 1'bx && COLLDISN_int === 1'b1 &&  (CENA_int !== 
      1'b1 && ((TENB_ ? CENB_ : TCENB_) !== 1'b1)) && row_contention(TENB_ ? AB_ : 
@@ -2341,9 +1960,9 @@ task dumpmem;
           $display("%s contention: both writes fail in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           WRITE_WRITE = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
 	      end
         end else if (WENA_int !== 1'b1) begin
@@ -2351,14 +1970,14 @@ task dumpmem;
           $display("%s contention: write A succeeds, read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
 		end
         end else if (WENB_int !== 1'b1) begin
 		if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: write B succeeds, read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
 		end
         end else begin
           readWriteB;
@@ -2398,13 +2017,13 @@ task dumpmem;
         if (WENB_int !== 1'b1) begin
           $display("%s contention: write B fails in %m at %0t",ASSERT_PREFIX, $time);
           WRITE_WRITE_1 = 1;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE_1 = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
         end else begin
           readWriteB;
           $display("%s contention: read B succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2419,7 +2038,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read A fails in %m at %0t",ASSERT_PREFIX, $time);
@@ -2428,7 +2047,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
         end else begin
           readWriteA;
           $display("%s contention: read A succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2447,62 +2066,51 @@ task dumpmem;
   begin
     if (RET1N_int === 1'bx || RET1N_int === 1'bz) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0 && CENB_int === 1'b0) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_int === 1'b0) begin
       // no cycle in retention mode
     end else if (^{CENB_int, EMAB_int, EMAWB_int, EMASB_int, RET1N_int, (STOVB_int 
      && !CENB_int)} === 1'bx) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if ((AB_int >= WORDS) && (CENB_int === 1'b0)) begin
-      QB_int = WENB_int !== 1'b1 ? QB_int : {24{1'bx}};
-      QB_int_delayed = WENB_int !== 1'b1 ? QB_int_delayed : {24{1'bx}};
+      QB_int = WENB_int !== 1'b1 ? QB_int : {8{1'bx}};
+      QB_int_delayed = WENB_int !== 1'b1 ? QB_int_delayed : {8{1'bx}};
     end else if (CENB_int === 1'b0 && (^AB_int) === 1'bx) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (CENB_int === 1'b0) begin
-      mux_address = (AB_int & 2'b11);
-      row_address = (AB_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AB_int & 4'b1111);
+      row_address = (AB_int >> 4);
+      if (row_address > 31)
+        row = {128{1'bx}};
       else
         row = mem[row_address];
-      writeEnable = ~{24{WENB_int}};
+      writeEnable = ~{8{WENB_int}};
       if (WENB_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DB_int[23], 3'b000, DB_int[22], 3'b000, DB_int[21],
-          3'b000, DB_int[20], 3'b000, DB_int[19], 3'b000, DB_int[18], 3'b000, DB_int[17],
-          3'b000, DB_int[16], 3'b000, DB_int[15], 3'b000, DB_int[14], 3'b000, DB_int[13],
-          3'b000, DB_int[12], 3'b000, DB_int[11], 3'b000, DB_int[10], 3'b000, DB_int[9],
-          3'b000, DB_int[8], 3'b000, DB_int[7], 3'b000, DB_int[6], 3'b000, DB_int[5],
-          3'b000, DB_int[4], 3'b000, DB_int[3], 3'b000, DB_int[2], 3'b000, DB_int[1],
-          3'b000, DB_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DB_int[7], 15'b000000000000000, DB_int[6],
+          15'b000000000000000, DB_int[5], 15'b000000000000000, DB_int[4], 15'b000000000000000, DB_int[3],
+          15'b000000000000000, DB_int[2], 15'b000000000000000, DB_int[1], 15'b000000000000000, DB_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch1 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch1 = readLatch1;
-      QB_int = {shifted_readLatch1[23], shifted_readLatch1[22], shifted_readLatch1[21],
-        shifted_readLatch1[20], shifted_readLatch1[19], shifted_readLatch1[18], shifted_readLatch1[17],
-        shifted_readLatch1[16], shifted_readLatch1[15], shifted_readLatch1[14], shifted_readLatch1[13],
-        shifted_readLatch1[12], shifted_readLatch1[11], shifted_readLatch1[10], shifted_readLatch1[9],
-        shifted_readLatch1[8], shifted_readLatch1[7], shifted_readLatch1[6], shifted_readLatch1[5],
-        shifted_readLatch1[4], shifted_readLatch1[3], shifted_readLatch1[2], shifted_readLatch1[1],
+        readLatch1 = {data_out[124], data_out[120], data_out[116], data_out[112], data_out[108],
+          data_out[104], data_out[100], data_out[96], data_out[92], data_out[88], data_out[84],
+          data_out[80], data_out[76], data_out[72], data_out[68], data_out[64], data_out[60],
+          data_out[56], data_out[52], data_out[48], data_out[44], data_out[40], data_out[36],
+          data_out[32], data_out[28], data_out[24], data_out[20], data_out[16], data_out[12],
+          data_out[8], data_out[4], data_out[0]};
+      shifted_readLatch1 = (readLatch1 >> AB_int[3:2]);
+      QB_int = {shifted_readLatch1[28], shifted_readLatch1[24], shifted_readLatch1[20],
+        shifted_readLatch1[16], shifted_readLatch1[12], shifted_readLatch1[8], shifted_readLatch1[4],
         shifted_readLatch1[0]};
       end
     end
@@ -2518,25 +2126,25 @@ task dumpmem;
   always @ RET1N_ begin
     if (CLKB_ == 1'b1) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end
     if (RET1N_ === 1'bx || RET1N_ === 1'bz) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_ === 1'b0 && RET1N_int === 1'b1 && (CENB_p2 === 1'b0 || TCENB_p2 === 1'b0) ) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (RET1N_ === 1'b1 && RET1N_int === 1'b0 && (CENB_p2 === 1'b0 || TCENB_p2 === 1'b0) ) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end
     if (RET1N_ == 1'b0) begin
-      QB_int = {24{1'bx}};
-      QB_int_delayed = {24{1'bx}};
+      QB_int = {8{1'bx}};
+      QB_int_delayed = {8{1'bx}};
       CENB_int = 1'bx;
       WENB_int = 1'bx;
       AB_int = {9{1'bx}};
-      DB_int = {24{1'bx}};
+      DB_int = {8{1'bx}};
       EMAB_int = {3{1'bx}};
       EMAWB_int = {2{1'bx}};
       EMASB_int = 1'bx;
@@ -2545,18 +2153,18 @@ task dumpmem;
       TCENB_int = 1'bx;
       TWENB_int = 1'bx;
       TAB_int = {9{1'bx}};
-      TDB_int = {24{1'bx}};
-      TQB_int = {24{1'bx}};
+      TDB_int = {8{1'bx}};
+      TQB_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVB_int = 1'bx;
       COLLDISN_int = 1'bx;
     end else begin
-      QB_int = {24{1'bx}};
-      QB_int_delayed = {24{1'bx}};
+      QB_int = {8{1'bx}};
+      QB_int_delayed = {8{1'bx}};
       CENB_int = 1'bx;
       WENB_int = 1'bx;
       AB_int = {9{1'bx}};
-      DB_int = {24{1'bx}};
+      DB_int = {8{1'bx}};
       EMAB_int = {3{1'bx}};
       EMAWB_int = {2{1'bx}};
       EMASB_int = 1'bx;
@@ -2565,8 +2173,8 @@ task dumpmem;
       TCENB_int = 1'bx;
       TWENB_int = 1'bx;
       TAB_int = {9{1'bx}};
-      TDB_int = {24{1'bx}};
-      TQB_int = {24{1'bx}};
+      TDB_int = {8{1'bx}};
+      TQB_int = {8{1'bx}};
       RET1N_int = 1'bx;
       STOVB_int = 1'bx;
       COLLDISN_int = 1'bx;
@@ -2590,7 +2198,7 @@ task dumpmem;
   end else begin
     if ((CLKB_ === 1'bx || CLKB_ === 1'bz) && RET1N_ !== 1'b0) begin
       failedWrite(1);
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
     end else if (CLKB_ === 1'b1 && LAST_CLKB === 1'b0) begin
       CENB_int = TENB_ ? CENB_ : TCENB_;
       EMAB_int = EMAB_;
@@ -2610,10 +2218,12 @@ task dumpmem;
         TCENB_int = TCENB_;
         TAB_int = TAB_;
         TDB_int = TDB_;
+        if (WENB_int === 1'b1)
+          read_mux_sel1 = (TENB_ ? AB_[3:2] : TAB_[3:2] );
       end
       clk1_int = 1'b0;
       if (CENB_int === 1'b0 && WENB_int === 1'b1) 
-         QB_int_delayed = {24{1'bx}};
+         QB_int_delayed = {8{1'bx}};
       if (CENB_int === 1'b0) previous_CLKB = $realtime;
     readWriteB;
     #0;
@@ -2633,9 +2243,9 @@ task dumpmem;
           $display("%s contention: both writes fail in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           WRITE_WRITE = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
 	      end
         end else if (WENA_int !== 1'b1) begin
@@ -2643,14 +2253,14 @@ task dumpmem;
           $display("%s contention: write A succeeds, read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
 		end
         end else if (WENB_int !== 1'b1) begin
 		if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: write B succeeds, read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
 		end
         end else begin
           readWriteA;
@@ -2690,13 +2300,13 @@ task dumpmem;
         if (WENA_int !== 1'b1) begin
           $display("%s contention: write A fails in %m at %0t",ASSERT_PREFIX, $time);
           WRITE_WRITE_1 = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE_1 = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
         end else begin
           readWriteA;
           $display("%s contention: read A succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2711,7 +2321,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read B fails in %m at %0t",ASSERT_PREFIX, $time);
@@ -2720,7 +2330,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
         end else begin
           readWriteB;
           $display("%s contention: read B succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2746,7 +2356,7 @@ task dumpmem;
       EMAB_int[2] === 1'bx || EMASB_int === 1'bx || EMAWB_int[0] === 1'bx || EMAWB_int[1] === 1'bx || 
       RET1N_int === 1'bx || (STOVB_int && !CENB_int) === 1'bx || TENB_int === 1'bx || 
       clk1_int === 1'bx) begin
-      QB_int = {24{1'bx}};
+      QB_int = {8{1'bx}};
       failedWrite(1);
     end else if  (cont_flag1_int === 1'bx && COLLDISN_int === 1'b1 &&  (CENB_int !== 
      1'b1 && ((TENA_ ? CENA_ : TCENA_) !== 1'b1)) && row_contention(TENA_ ? AA_ : 
@@ -2764,9 +2374,9 @@ task dumpmem;
           $display("%s contention: both writes fail in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           WRITE_WRITE = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
 	      end
         end else if (WENA_int !== 1'b1) begin
@@ -2774,14 +2384,14 @@ task dumpmem;
           $display("%s contention: write A succeeds, read B fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
 		end
         end else if (WENB_int !== 1'b1) begin
 		if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: write B succeeds, read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
 		end
         end else begin
           readWriteA;
@@ -2821,13 +2431,13 @@ task dumpmem;
         if (WENA_int !== 1'b1) begin
           $display("%s contention: write A fails in %m at %0t",ASSERT_PREFIX, $time);
           WRITE_WRITE_1 = 1;
-          DA_int = {24{1'bx}};
+          DA_int = {8{1'bx}};
           readWriteA;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read A fails in %m at %0t",ASSERT_PREFIX, $time);
           COL_CC = 1;
           READ_WRITE_1 = 1;
-          QA_int = {24{1'bx}};
+          QA_int = {8{1'bx}};
         end else begin
           readWriteA;
           $display("%s contention: read A succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2842,7 +2452,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          DB_int = {24{1'bx}};
+          DB_int = {8{1'bx}};
           readWriteB;
         end else if (is_contention(AA_int, AB_int,  WENA_int, WENB_int)) begin
           $display("%s contention: read B fails in %m at %0t",ASSERT_PREFIX, $time);
@@ -2851,7 +2461,7 @@ task dumpmem;
             READ_WRITE = 1;
             READ_WRITE_1 = 0;
           end
-          QB_int = {24{1'bx}};
+          QB_int = {8{1'bx}};
         end else begin
           readWriteB;
           $display("%s contention: read B succeeds in %m at %0t",ASSERT_PREFIX, $time);
@@ -2877,8 +2487,8 @@ task dumpmem;
     reg anyWrite;
   begin
     anyWrite = ((& wena) === 1'b1 && (& wenb) === 1'b1) ? 1'b0 : 1'b1;
-    sameMux = (aa[1:0] == ab[1:0]) ? 1'b1 : 1'b0;
-    if (aa[8:2] == ab[8:2]) begin
+    sameMux = (aa[3:0] == ab[3:0]) ? 1'b1 : 1'b0;
+    if (aa[8:4] == ab[8:4]) begin
       sameRow = 1'b1;
     end else begin
       sameRow = 1'b0;
@@ -2896,7 +2506,7 @@ task dumpmem;
     input [8:0] aa;
     input [8:0] ab;
   begin
-    if (aa[1:0] == ab[1:0])
+    if (aa[3:0] == ab[3:0])
       col_contention = 1'b1;
     else
       col_contention = 1'b0;
@@ -2968,70 +2578,6 @@ task dumpmem;
   end
   always @ NOT_AA0 begin
     AA_int[0] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA23 begin
-    DA_int[23] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA22 begin
-    DA_int[22] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA21 begin
-    DA_int[21] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA20 begin
-    DA_int[20] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA19 begin
-    DA_int[19] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA18 begin
-    DA_int[18] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA17 begin
-    DA_int[17] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA16 begin
-    DA_int[16] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA15 begin
-    DA_int[15] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA14 begin
-    DA_int[14] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA13 begin
-    DA_int[13] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA12 begin
-    DA_int[12] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA11 begin
-    DA_int[11] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA10 begin
-    DA_int[10] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA9 begin
-    DA_int[9] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_DA8 begin
-    DA_int[8] = 1'bx;
     if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
   end
   always @ NOT_DA7 begin
@@ -3108,70 +2654,6 @@ task dumpmem;
   end
   always @ NOT_AB0 begin
     AB_int[0] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB23 begin
-    DB_int[23] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB22 begin
-    DB_int[22] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB21 begin
-    DB_int[21] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB20 begin
-    DB_int[20] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB19 begin
-    DB_int[19] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB18 begin
-    DB_int[18] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB17 begin
-    DB_int[17] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB16 begin
-    DB_int[16] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB15 begin
-    DB_int[15] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB14 begin
-    DB_int[14] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB13 begin
-    DB_int[13] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB12 begin
-    DB_int[12] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB11 begin
-    DB_int[11] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB10 begin
-    DB_int[10] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB9 begin
-    DB_int[9] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_DB8 begin
-    DB_int[8] = 1'bx;
     if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
   end
   always @ NOT_DB7 begin
@@ -3302,70 +2784,6 @@ task dumpmem;
     AA_int[0] = 1'bx;
     if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
   end
-  always @ NOT_TDA23 begin
-    DA_int[23] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA22 begin
-    DA_int[22] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA21 begin
-    DA_int[21] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA20 begin
-    DA_int[20] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA19 begin
-    DA_int[19] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA18 begin
-    DA_int[18] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA17 begin
-    DA_int[17] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA16 begin
-    DA_int[16] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA15 begin
-    DA_int[15] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA14 begin
-    DA_int[14] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA13 begin
-    DA_int[13] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA12 begin
-    DA_int[12] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA11 begin
-    DA_int[11] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA10 begin
-    DA_int[10] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA9 begin
-    DA_int[9] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
-  always @ NOT_TDA8 begin
-    DA_int[8] = 1'bx;
-    if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
-  end
   always @ NOT_TDA7 begin
     DA_int[7] = 1'bx;
     if ( globalNotifier0 === 1'b0 ) globalNotifier0 = 1'bx;
@@ -3444,70 +2862,6 @@ task dumpmem;
   end
   always @ NOT_TAB0 begin
     AB_int[0] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB23 begin
-    DB_int[23] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB22 begin
-    DB_int[22] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB21 begin
-    DB_int[21] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB20 begin
-    DB_int[20] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB19 begin
-    DB_int[19] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB18 begin
-    DB_int[18] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB17 begin
-    DB_int[17] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB16 begin
-    DB_int[16] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB15 begin
-    DB_int[15] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB14 begin
-    DB_int[14] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB13 begin
-    DB_int[13] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB12 begin
-    DB_int[12] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB11 begin
-    DB_int[11] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB10 begin
-    DB_int[10] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB9 begin
-    DB_int[9] = 1'bx;
-    if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
-  end
-  always @ NOT_TDB8 begin
-    DB_int[8] = 1'bx;
     if ( globalNotifier1 === 1'b0 ) globalNotifier1 = 1'bx;
   end
   always @ NOT_TDB7 begin
@@ -4289,70 +3643,6 @@ task dumpmem;
        (TAA[1] => AYA[1]) = (1.000, 1.000);
     if (TENA == 1'b0)
        (TAA[0] => AYA[0]) = (1.000, 1.000);
-    if (DA[23] == 1'b0 && TDA[23] == 1'b1)
-       (TENA => DYA[23]) = (1.000, 1.000);
-    if (DA[23] == 1'b1 && TDA[23] == 1'b0)
-       (TENA => DYA[23]) = (1.000, 1.000);
-    if (DA[22] == 1'b0 && TDA[22] == 1'b1)
-       (TENA => DYA[22]) = (1.000, 1.000);
-    if (DA[22] == 1'b1 && TDA[22] == 1'b0)
-       (TENA => DYA[22]) = (1.000, 1.000);
-    if (DA[21] == 1'b0 && TDA[21] == 1'b1)
-       (TENA => DYA[21]) = (1.000, 1.000);
-    if (DA[21] == 1'b1 && TDA[21] == 1'b0)
-       (TENA => DYA[21]) = (1.000, 1.000);
-    if (DA[20] == 1'b0 && TDA[20] == 1'b1)
-       (TENA => DYA[20]) = (1.000, 1.000);
-    if (DA[20] == 1'b1 && TDA[20] == 1'b0)
-       (TENA => DYA[20]) = (1.000, 1.000);
-    if (DA[19] == 1'b0 && TDA[19] == 1'b1)
-       (TENA => DYA[19]) = (1.000, 1.000);
-    if (DA[19] == 1'b1 && TDA[19] == 1'b0)
-       (TENA => DYA[19]) = (1.000, 1.000);
-    if (DA[18] == 1'b0 && TDA[18] == 1'b1)
-       (TENA => DYA[18]) = (1.000, 1.000);
-    if (DA[18] == 1'b1 && TDA[18] == 1'b0)
-       (TENA => DYA[18]) = (1.000, 1.000);
-    if (DA[17] == 1'b0 && TDA[17] == 1'b1)
-       (TENA => DYA[17]) = (1.000, 1.000);
-    if (DA[17] == 1'b1 && TDA[17] == 1'b0)
-       (TENA => DYA[17]) = (1.000, 1.000);
-    if (DA[16] == 1'b0 && TDA[16] == 1'b1)
-       (TENA => DYA[16]) = (1.000, 1.000);
-    if (DA[16] == 1'b1 && TDA[16] == 1'b0)
-       (TENA => DYA[16]) = (1.000, 1.000);
-    if (DA[15] == 1'b0 && TDA[15] == 1'b1)
-       (TENA => DYA[15]) = (1.000, 1.000);
-    if (DA[15] == 1'b1 && TDA[15] == 1'b0)
-       (TENA => DYA[15]) = (1.000, 1.000);
-    if (DA[14] == 1'b0 && TDA[14] == 1'b1)
-       (TENA => DYA[14]) = (1.000, 1.000);
-    if (DA[14] == 1'b1 && TDA[14] == 1'b0)
-       (TENA => DYA[14]) = (1.000, 1.000);
-    if (DA[13] == 1'b0 && TDA[13] == 1'b1)
-       (TENA => DYA[13]) = (1.000, 1.000);
-    if (DA[13] == 1'b1 && TDA[13] == 1'b0)
-       (TENA => DYA[13]) = (1.000, 1.000);
-    if (DA[12] == 1'b0 && TDA[12] == 1'b1)
-       (TENA => DYA[12]) = (1.000, 1.000);
-    if (DA[12] == 1'b1 && TDA[12] == 1'b0)
-       (TENA => DYA[12]) = (1.000, 1.000);
-    if (DA[11] == 1'b0 && TDA[11] == 1'b1)
-       (TENA => DYA[11]) = (1.000, 1.000);
-    if (DA[11] == 1'b1 && TDA[11] == 1'b0)
-       (TENA => DYA[11]) = (1.000, 1.000);
-    if (DA[10] == 1'b0 && TDA[10] == 1'b1)
-       (TENA => DYA[10]) = (1.000, 1.000);
-    if (DA[10] == 1'b1 && TDA[10] == 1'b0)
-       (TENA => DYA[10]) = (1.000, 1.000);
-    if (DA[9] == 1'b0 && TDA[9] == 1'b1)
-       (TENA => DYA[9]) = (1.000, 1.000);
-    if (DA[9] == 1'b1 && TDA[9] == 1'b0)
-       (TENA => DYA[9]) = (1.000, 1.000);
-    if (DA[8] == 1'b0 && TDA[8] == 1'b1)
-       (TENA => DYA[8]) = (1.000, 1.000);
-    if (DA[8] == 1'b1 && TDA[8] == 1'b0)
-       (TENA => DYA[8]) = (1.000, 1.000);
     if (DA[7] == 1'b0 && TDA[7] == 1'b1)
        (TENA => DYA[7]) = (1.000, 1.000);
     if (DA[7] == 1'b1 && TDA[7] == 1'b0)
@@ -4386,38 +3676,6 @@ task dumpmem;
     if (DA[0] == 1'b1 && TDA[0] == 1'b0)
        (TENA => DYA[0]) = (1.000, 1.000);
     if (TENA == 1'b1)
-       (DA[23] => DYA[23]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[22] => DYA[22]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[21] => DYA[21]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[20] => DYA[20]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[19] => DYA[19]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[18] => DYA[18]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[17] => DYA[17]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[16] => DYA[16]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[15] => DYA[15]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[14] => DYA[14]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[13] => DYA[13]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[12] => DYA[12]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[11] => DYA[11]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[10] => DYA[10]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[9] => DYA[9]) = (1.000, 1.000);
-    if (TENA == 1'b1)
-       (DA[8] => DYA[8]) = (1.000, 1.000);
-    if (TENA == 1'b1)
        (DA[7] => DYA[7]) = (1.000, 1.000);
     if (TENA == 1'b1)
        (DA[6] => DYA[6]) = (1.000, 1.000);
@@ -4433,38 +3691,6 @@ task dumpmem;
        (DA[1] => DYA[1]) = (1.000, 1.000);
     if (TENA == 1'b1)
        (DA[0] => DYA[0]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[23] => DYA[23]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[22] => DYA[22]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[21] => DYA[21]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[20] => DYA[20]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[19] => DYA[19]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[18] => DYA[18]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[17] => DYA[17]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[16] => DYA[16]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[15] => DYA[15]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[14] => DYA[14]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[13] => DYA[13]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[12] => DYA[12]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[11] => DYA[11]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[10] => DYA[10]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[9] => DYA[9]) = (1.000, 1.000);
-    if (TENA == 1'b0)
-       (TDA[8] => DYA[8]) = (1.000, 1.000);
     if (TENA == 1'b0)
        (TDA[7] => DYA[7]) = (1.000, 1.000);
     if (TENA == 1'b0)
@@ -4569,70 +3795,6 @@ task dumpmem;
        (TAB[1] => AYB[1]) = (1.000, 1.000);
     if (TENB == 1'b0)
        (TAB[0] => AYB[0]) = (1.000, 1.000);
-    if (DB[23] == 1'b0 && TDB[23] == 1'b1)
-       (TENB => DYB[23]) = (1.000, 1.000);
-    if (DB[23] == 1'b1 && TDB[23] == 1'b0)
-       (TENB => DYB[23]) = (1.000, 1.000);
-    if (DB[22] == 1'b0 && TDB[22] == 1'b1)
-       (TENB => DYB[22]) = (1.000, 1.000);
-    if (DB[22] == 1'b1 && TDB[22] == 1'b0)
-       (TENB => DYB[22]) = (1.000, 1.000);
-    if (DB[21] == 1'b0 && TDB[21] == 1'b1)
-       (TENB => DYB[21]) = (1.000, 1.000);
-    if (DB[21] == 1'b1 && TDB[21] == 1'b0)
-       (TENB => DYB[21]) = (1.000, 1.000);
-    if (DB[20] == 1'b0 && TDB[20] == 1'b1)
-       (TENB => DYB[20]) = (1.000, 1.000);
-    if (DB[20] == 1'b1 && TDB[20] == 1'b0)
-       (TENB => DYB[20]) = (1.000, 1.000);
-    if (DB[19] == 1'b0 && TDB[19] == 1'b1)
-       (TENB => DYB[19]) = (1.000, 1.000);
-    if (DB[19] == 1'b1 && TDB[19] == 1'b0)
-       (TENB => DYB[19]) = (1.000, 1.000);
-    if (DB[18] == 1'b0 && TDB[18] == 1'b1)
-       (TENB => DYB[18]) = (1.000, 1.000);
-    if (DB[18] == 1'b1 && TDB[18] == 1'b0)
-       (TENB => DYB[18]) = (1.000, 1.000);
-    if (DB[17] == 1'b0 && TDB[17] == 1'b1)
-       (TENB => DYB[17]) = (1.000, 1.000);
-    if (DB[17] == 1'b1 && TDB[17] == 1'b0)
-       (TENB => DYB[17]) = (1.000, 1.000);
-    if (DB[16] == 1'b0 && TDB[16] == 1'b1)
-       (TENB => DYB[16]) = (1.000, 1.000);
-    if (DB[16] == 1'b1 && TDB[16] == 1'b0)
-       (TENB => DYB[16]) = (1.000, 1.000);
-    if (DB[15] == 1'b0 && TDB[15] == 1'b1)
-       (TENB => DYB[15]) = (1.000, 1.000);
-    if (DB[15] == 1'b1 && TDB[15] == 1'b0)
-       (TENB => DYB[15]) = (1.000, 1.000);
-    if (DB[14] == 1'b0 && TDB[14] == 1'b1)
-       (TENB => DYB[14]) = (1.000, 1.000);
-    if (DB[14] == 1'b1 && TDB[14] == 1'b0)
-       (TENB => DYB[14]) = (1.000, 1.000);
-    if (DB[13] == 1'b0 && TDB[13] == 1'b1)
-       (TENB => DYB[13]) = (1.000, 1.000);
-    if (DB[13] == 1'b1 && TDB[13] == 1'b0)
-       (TENB => DYB[13]) = (1.000, 1.000);
-    if (DB[12] == 1'b0 && TDB[12] == 1'b1)
-       (TENB => DYB[12]) = (1.000, 1.000);
-    if (DB[12] == 1'b1 && TDB[12] == 1'b0)
-       (TENB => DYB[12]) = (1.000, 1.000);
-    if (DB[11] == 1'b0 && TDB[11] == 1'b1)
-       (TENB => DYB[11]) = (1.000, 1.000);
-    if (DB[11] == 1'b1 && TDB[11] == 1'b0)
-       (TENB => DYB[11]) = (1.000, 1.000);
-    if (DB[10] == 1'b0 && TDB[10] == 1'b1)
-       (TENB => DYB[10]) = (1.000, 1.000);
-    if (DB[10] == 1'b1 && TDB[10] == 1'b0)
-       (TENB => DYB[10]) = (1.000, 1.000);
-    if (DB[9] == 1'b0 && TDB[9] == 1'b1)
-       (TENB => DYB[9]) = (1.000, 1.000);
-    if (DB[9] == 1'b1 && TDB[9] == 1'b0)
-       (TENB => DYB[9]) = (1.000, 1.000);
-    if (DB[8] == 1'b0 && TDB[8] == 1'b1)
-       (TENB => DYB[8]) = (1.000, 1.000);
-    if (DB[8] == 1'b1 && TDB[8] == 1'b0)
-       (TENB => DYB[8]) = (1.000, 1.000);
     if (DB[7] == 1'b0 && TDB[7] == 1'b1)
        (TENB => DYB[7]) = (1.000, 1.000);
     if (DB[7] == 1'b1 && TDB[7] == 1'b0)
@@ -4666,38 +3828,6 @@ task dumpmem;
     if (DB[0] == 1'b1 && TDB[0] == 1'b0)
        (TENB => DYB[0]) = (1.000, 1.000);
     if (TENB == 1'b1)
-       (DB[23] => DYB[23]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[22] => DYB[22]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[21] => DYB[21]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[20] => DYB[20]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[19] => DYB[19]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[18] => DYB[18]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[17] => DYB[17]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[16] => DYB[16]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[15] => DYB[15]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[14] => DYB[14]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[13] => DYB[13]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[12] => DYB[12]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[11] => DYB[11]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[10] => DYB[10]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[9] => DYB[9]) = (1.000, 1.000);
-    if (TENB == 1'b1)
-       (DB[8] => DYB[8]) = (1.000, 1.000);
-    if (TENB == 1'b1)
        (DB[7] => DYB[7]) = (1.000, 1.000);
     if (TENB == 1'b1)
        (DB[6] => DYB[6]) = (1.000, 1.000);
@@ -4713,38 +3843,6 @@ task dumpmem;
        (DB[1] => DYB[1]) = (1.000, 1.000);
     if (TENB == 1'b1)
        (DB[0] => DYB[0]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[23] => DYB[23]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[22] => DYB[22]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[21] => DYB[21]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[20] => DYB[20]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[19] => DYB[19]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[18] => DYB[18]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[17] => DYB[17]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[16] => DYB[16]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[15] => DYB[15]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[14] => DYB[14]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[13] => DYB[13]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[12] => DYB[12]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[11] => DYB[11]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[10] => DYB[10]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[9] => DYB[9]) = (1.000, 1.000);
-    if (TENB == 1'b0)
-       (TDB[8] => DYB[8]) = (1.000, 1.000);
     if (TENB == 1'b0)
        (TDB[7] => DYB[7]) = (1.000, 1.000);
     if (TENB == 1'b0)
@@ -4762,38 +3860,6 @@ task dumpmem;
     if (TENB == 1'b0)
        (TDB[0] => DYB[0]) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[6] : 1'b0)) = (1.000, 1.000);
@@ -4809,38 +3875,6 @@ task dumpmem;
        (posedge CLKA => (QA[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
@@ -4858,38 +3892,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[6] : 1'b0)) = (1.000, 1.000);
@@ -4905,38 +3907,6 @@ task dumpmem;
        (posedge CLKA => (QA[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
@@ -4954,38 +3924,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b0 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[6] : 1'b0)) = (1.000, 1.000);
@@ -5001,38 +3939,6 @@ task dumpmem;
        (posedge CLKA => (QA[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
@@ -5050,38 +3956,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b0 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[6] : 1'b0)) = (1.000, 1.000);
@@ -5098,38 +3972,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b0 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (posedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[6] : 1'b0)) = (1.000, 1.000);
@@ -5145,38 +3987,6 @@ task dumpmem;
        (posedge CLKA => (QA[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b0 && EMAA[2] == 1'b1 && EMAA[1] == 1'b1 && EMAA[0] == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (posedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
-       (negedge CLKA => (QA[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (negedge CLKA => (QA[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
@@ -5193,70 +4003,6 @@ task dumpmem;
        (negedge CLKA => (QA[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENA == 1'b1 && STOVA == 1'b1 && ((TENA == 1'b1 && WENA == 1'b1) || (TENA == 1'b0 && TWENA == 1'b1)))
        (negedge CLKA => (QA[0] : 1'b0)) = (1.000, 1.000);
-    if (TQA[23] == 1'b1)
-       (BENA => QA[23]) = (1.000, 1.000);
-    if (TQA[23] == 1'b0)
-       (BENA => QA[23]) = (1.000, 1.000);
-    if (TQA[22] == 1'b1)
-       (BENA => QA[22]) = (1.000, 1.000);
-    if (TQA[22] == 1'b0)
-       (BENA => QA[22]) = (1.000, 1.000);
-    if (TQA[21] == 1'b1)
-       (BENA => QA[21]) = (1.000, 1.000);
-    if (TQA[21] == 1'b0)
-       (BENA => QA[21]) = (1.000, 1.000);
-    if (TQA[20] == 1'b1)
-       (BENA => QA[20]) = (1.000, 1.000);
-    if (TQA[20] == 1'b0)
-       (BENA => QA[20]) = (1.000, 1.000);
-    if (TQA[19] == 1'b1)
-       (BENA => QA[19]) = (1.000, 1.000);
-    if (TQA[19] == 1'b0)
-       (BENA => QA[19]) = (1.000, 1.000);
-    if (TQA[18] == 1'b1)
-       (BENA => QA[18]) = (1.000, 1.000);
-    if (TQA[18] == 1'b0)
-       (BENA => QA[18]) = (1.000, 1.000);
-    if (TQA[17] == 1'b1)
-       (BENA => QA[17]) = (1.000, 1.000);
-    if (TQA[17] == 1'b0)
-       (BENA => QA[17]) = (1.000, 1.000);
-    if (TQA[16] == 1'b1)
-       (BENA => QA[16]) = (1.000, 1.000);
-    if (TQA[16] == 1'b0)
-       (BENA => QA[16]) = (1.000, 1.000);
-    if (TQA[15] == 1'b1)
-       (BENA => QA[15]) = (1.000, 1.000);
-    if (TQA[15] == 1'b0)
-       (BENA => QA[15]) = (1.000, 1.000);
-    if (TQA[14] == 1'b1)
-       (BENA => QA[14]) = (1.000, 1.000);
-    if (TQA[14] == 1'b0)
-       (BENA => QA[14]) = (1.000, 1.000);
-    if (TQA[13] == 1'b1)
-       (BENA => QA[13]) = (1.000, 1.000);
-    if (TQA[13] == 1'b0)
-       (BENA => QA[13]) = (1.000, 1.000);
-    if (TQA[12] == 1'b1)
-       (BENA => QA[12]) = (1.000, 1.000);
-    if (TQA[12] == 1'b0)
-       (BENA => QA[12]) = (1.000, 1.000);
-    if (TQA[11] == 1'b1)
-       (BENA => QA[11]) = (1.000, 1.000);
-    if (TQA[11] == 1'b0)
-       (BENA => QA[11]) = (1.000, 1.000);
-    if (TQA[10] == 1'b1)
-       (BENA => QA[10]) = (1.000, 1.000);
-    if (TQA[10] == 1'b0)
-       (BENA => QA[10]) = (1.000, 1.000);
-    if (TQA[9] == 1'b1)
-       (BENA => QA[9]) = (1.000, 1.000);
-    if (TQA[9] == 1'b0)
-       (BENA => QA[9]) = (1.000, 1.000);
-    if (TQA[8] == 1'b1)
-       (BENA => QA[8]) = (1.000, 1.000);
-    if (TQA[8] == 1'b0)
-       (BENA => QA[8]) = (1.000, 1.000);
     if (TQA[7] == 1'b1)
        (BENA => QA[7]) = (1.000, 1.000);
     if (TQA[7] == 1'b0)
@@ -5290,38 +4036,6 @@ task dumpmem;
     if (TQA[0] == 1'b0)
        (BENA => QA[0]) = (1.000, 1.000);
     if (BENA == 1'b0)
-       (TQA[23] => QA[23]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[22] => QA[22]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[21] => QA[21]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[20] => QA[20]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[19] => QA[19]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[18] => QA[18]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[17] => QA[17]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[16] => QA[16]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[15] => QA[15]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[14] => QA[14]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[13] => QA[13]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[12] => QA[12]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[11] => QA[11]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[10] => QA[10]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[9] => QA[9]) = (1.000, 1.000);
-    if (BENA == 1'b0)
-       (TQA[8] => QA[8]) = (1.000, 1.000);
-    if (BENA == 1'b0)
        (TQA[7] => QA[7]) = (1.000, 1.000);
     if (BENA == 1'b0)
        (TQA[6] => QA[6]) = (1.000, 1.000);
@@ -5338,38 +4052,6 @@ task dumpmem;
     if (BENA == 1'b0)
        (TQA[0] => QA[0]) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[6] : 1'b0)) = (1.000, 1.000);
@@ -5385,38 +4067,6 @@ task dumpmem;
        (posedge CLKB => (QB[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
@@ -5434,38 +4084,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[6] : 1'b0)) = (1.000, 1.000);
@@ -5481,38 +4099,6 @@ task dumpmem;
        (posedge CLKB => (QB[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
@@ -5530,38 +4116,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b0 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[6] : 1'b0)) = (1.000, 1.000);
@@ -5577,38 +4131,6 @@ task dumpmem;
        (posedge CLKB => (QB[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
@@ -5626,38 +4148,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b0 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[6] : 1'b0)) = (1.000, 1.000);
@@ -5674,38 +4164,6 @@ task dumpmem;
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b0 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (posedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[6] : 1'b0)) = (1.000, 1.000);
@@ -5721,38 +4179,6 @@ task dumpmem;
        (posedge CLKB => (QB[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b0 && EMAB[2] == 1'b1 && EMAB[1] == 1'b1 && EMAB[0] == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (posedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[23] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[22] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[21] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[20] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[19] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[18] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[17] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[16] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[15] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[14] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[13] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[12] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[11] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[10] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[9] : 1'b0)) = (1.000, 1.000);
-    if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
-       (negedge CLKB => (QB[8] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (negedge CLKB => (QB[7] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
@@ -5769,70 +4195,6 @@ task dumpmem;
        (negedge CLKB => (QB[1] : 1'b0)) = (1.000, 1.000);
     if (RET1N == 1'b1 && BENB == 1'b1 && STOVB == 1'b1 && ((TENB == 1'b1 && WENB == 1'b1) || (TENB == 1'b0 && TWENB == 1'b1)))
        (negedge CLKB => (QB[0] : 1'b0)) = (1.000, 1.000);
-    if (TQB[23] == 1'b1)
-       (BENB => QB[23]) = (1.000, 1.000);
-    if (TQB[23] == 1'b0)
-       (BENB => QB[23]) = (1.000, 1.000);
-    if (TQB[22] == 1'b1)
-       (BENB => QB[22]) = (1.000, 1.000);
-    if (TQB[22] == 1'b0)
-       (BENB => QB[22]) = (1.000, 1.000);
-    if (TQB[21] == 1'b1)
-       (BENB => QB[21]) = (1.000, 1.000);
-    if (TQB[21] == 1'b0)
-       (BENB => QB[21]) = (1.000, 1.000);
-    if (TQB[20] == 1'b1)
-       (BENB => QB[20]) = (1.000, 1.000);
-    if (TQB[20] == 1'b0)
-       (BENB => QB[20]) = (1.000, 1.000);
-    if (TQB[19] == 1'b1)
-       (BENB => QB[19]) = (1.000, 1.000);
-    if (TQB[19] == 1'b0)
-       (BENB => QB[19]) = (1.000, 1.000);
-    if (TQB[18] == 1'b1)
-       (BENB => QB[18]) = (1.000, 1.000);
-    if (TQB[18] == 1'b0)
-       (BENB => QB[18]) = (1.000, 1.000);
-    if (TQB[17] == 1'b1)
-       (BENB => QB[17]) = (1.000, 1.000);
-    if (TQB[17] == 1'b0)
-       (BENB => QB[17]) = (1.000, 1.000);
-    if (TQB[16] == 1'b1)
-       (BENB => QB[16]) = (1.000, 1.000);
-    if (TQB[16] == 1'b0)
-       (BENB => QB[16]) = (1.000, 1.000);
-    if (TQB[15] == 1'b1)
-       (BENB => QB[15]) = (1.000, 1.000);
-    if (TQB[15] == 1'b0)
-       (BENB => QB[15]) = (1.000, 1.000);
-    if (TQB[14] == 1'b1)
-       (BENB => QB[14]) = (1.000, 1.000);
-    if (TQB[14] == 1'b0)
-       (BENB => QB[14]) = (1.000, 1.000);
-    if (TQB[13] == 1'b1)
-       (BENB => QB[13]) = (1.000, 1.000);
-    if (TQB[13] == 1'b0)
-       (BENB => QB[13]) = (1.000, 1.000);
-    if (TQB[12] == 1'b1)
-       (BENB => QB[12]) = (1.000, 1.000);
-    if (TQB[12] == 1'b0)
-       (BENB => QB[12]) = (1.000, 1.000);
-    if (TQB[11] == 1'b1)
-       (BENB => QB[11]) = (1.000, 1.000);
-    if (TQB[11] == 1'b0)
-       (BENB => QB[11]) = (1.000, 1.000);
-    if (TQB[10] == 1'b1)
-       (BENB => QB[10]) = (1.000, 1.000);
-    if (TQB[10] == 1'b0)
-       (BENB => QB[10]) = (1.000, 1.000);
-    if (TQB[9] == 1'b1)
-       (BENB => QB[9]) = (1.000, 1.000);
-    if (TQB[9] == 1'b0)
-       (BENB => QB[9]) = (1.000, 1.000);
-    if (TQB[8] == 1'b1)
-       (BENB => QB[8]) = (1.000, 1.000);
-    if (TQB[8] == 1'b0)
-       (BENB => QB[8]) = (1.000, 1.000);
     if (TQB[7] == 1'b1)
        (BENB => QB[7]) = (1.000, 1.000);
     if (TQB[7] == 1'b0)
@@ -5865,38 +4227,6 @@ task dumpmem;
        (BENB => QB[0]) = (1.000, 1.000);
     if (TQB[0] == 1'b0)
        (BENB => QB[0]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[23] => QB[23]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[22] => QB[22]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[21] => QB[21]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[20] => QB[20]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[19] => QB[19]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[18] => QB[18]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[17] => QB[17]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[16] => QB[16]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[15] => QB[15]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[14] => QB[14]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[13] => QB[13]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[12] => QB[12]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[11] => QB[11]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[10] => QB[10]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[9] => QB[9]) = (1.000, 1.000);
-    if (BENB == 1'b0)
-       (TQB[8] => QB[8]) = (1.000, 1.000);
     if (BENB == 1'b0)
        (TQB[7] => QB[7]) = (1.000, 1.000);
     if (BENB == 1'b0)
@@ -6050,22 +4380,6 @@ task dumpmem;
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0, negedge AA[2], 1.000, 0.500, NOT_AA2);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0, negedge AA[1], 1.000, 0.500, NOT_AA1);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0, negedge AA[0], 1.000, 0.500, NOT_AA0);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[23], 1.000, 0.500, NOT_DA23);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[22], 1.000, 0.500, NOT_DA22);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[21], 1.000, 0.500, NOT_DA21);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[20], 1.000, 0.500, NOT_DA20);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[19], 1.000, 0.500, NOT_DA19);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[18], 1.000, 0.500, NOT_DA18);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[17], 1.000, 0.500, NOT_DA17);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[16], 1.000, 0.500, NOT_DA16);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[15], 1.000, 0.500, NOT_DA15);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[14], 1.000, 0.500, NOT_DA14);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[13], 1.000, 0.500, NOT_DA13);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[12], 1.000, 0.500, NOT_DA12);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[11], 1.000, 0.500, NOT_DA11);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[10], 1.000, 0.500, NOT_DA10);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[9], 1.000, 0.500, NOT_DA9);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[8], 1.000, 0.500, NOT_DA8);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[7], 1.000, 0.500, NOT_DA7);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[6], 1.000, 0.500, NOT_DA6);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[5], 1.000, 0.500, NOT_DA5);
@@ -6074,22 +4388,6 @@ task dumpmem;
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[2], 1.000, 0.500, NOT_DA2);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[1], 1.000, 0.500, NOT_DA1);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, posedge DA[0], 1.000, 0.500, NOT_DA0);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[23], 1.000, 0.500, NOT_DA23);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[22], 1.000, 0.500, NOT_DA22);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[21], 1.000, 0.500, NOT_DA21);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[20], 1.000, 0.500, NOT_DA20);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[19], 1.000, 0.500, NOT_DA19);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[18], 1.000, 0.500, NOT_DA18);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[17], 1.000, 0.500, NOT_DA17);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[16], 1.000, 0.500, NOT_DA16);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[15], 1.000, 0.500, NOT_DA15);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[14], 1.000, 0.500, NOT_DA14);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[13], 1.000, 0.500, NOT_DA13);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[12], 1.000, 0.500, NOT_DA12);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[11], 1.000, 0.500, NOT_DA11);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[10], 1.000, 0.500, NOT_DA10);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[9], 1.000, 0.500, NOT_DA9);
-    $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[8], 1.000, 0.500, NOT_DA8);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[7], 1.000, 0.500, NOT_DA7);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[6], 1.000, 0.500, NOT_DA6);
     $setuphold(posedge CLKA &&& TENAeq1andCENAeq0andWENAeq0, negedge DA[5], 1.000, 0.500, NOT_DA5);
@@ -6234,22 +4532,6 @@ task dumpmem;
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0, negedge AB[2], 1.000, 0.500, NOT_AB2);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0, negedge AB[1], 1.000, 0.500, NOT_AB1);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0, negedge AB[0], 1.000, 0.500, NOT_AB0);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[23], 1.000, 0.500, NOT_DB23);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[22], 1.000, 0.500, NOT_DB22);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[21], 1.000, 0.500, NOT_DB21);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[20], 1.000, 0.500, NOT_DB20);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[19], 1.000, 0.500, NOT_DB19);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[18], 1.000, 0.500, NOT_DB18);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[17], 1.000, 0.500, NOT_DB17);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[16], 1.000, 0.500, NOT_DB16);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[15], 1.000, 0.500, NOT_DB15);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[14], 1.000, 0.500, NOT_DB14);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[13], 1.000, 0.500, NOT_DB13);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[12], 1.000, 0.500, NOT_DB12);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[11], 1.000, 0.500, NOT_DB11);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[10], 1.000, 0.500, NOT_DB10);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[9], 1.000, 0.500, NOT_DB9);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[8], 1.000, 0.500, NOT_DB8);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[7], 1.000, 0.500, NOT_DB7);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[6], 1.000, 0.500, NOT_DB6);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[5], 1.000, 0.500, NOT_DB5);
@@ -6258,22 +4540,6 @@ task dumpmem;
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[2], 1.000, 0.500, NOT_DB2);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[1], 1.000, 0.500, NOT_DB1);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, posedge DB[0], 1.000, 0.500, NOT_DB0);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[23], 1.000, 0.500, NOT_DB23);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[22], 1.000, 0.500, NOT_DB22);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[21], 1.000, 0.500, NOT_DB21);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[20], 1.000, 0.500, NOT_DB20);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[19], 1.000, 0.500, NOT_DB19);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[18], 1.000, 0.500, NOT_DB18);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[17], 1.000, 0.500, NOT_DB17);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[16], 1.000, 0.500, NOT_DB16);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[15], 1.000, 0.500, NOT_DB15);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[14], 1.000, 0.500, NOT_DB14);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[13], 1.000, 0.500, NOT_DB13);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[12], 1.000, 0.500, NOT_DB12);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[11], 1.000, 0.500, NOT_DB11);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[10], 1.000, 0.500, NOT_DB10);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[9], 1.000, 0.500, NOT_DB9);
-    $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[8], 1.000, 0.500, NOT_DB8);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[7], 1.000, 0.500, NOT_DB7);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[6], 1.000, 0.500, NOT_DB6);
     $setuphold(posedge CLKB &&& TENBeq1andCENBeq0andWENBeq0, negedge DB[5], 1.000, 0.500, NOT_DB5);
@@ -6331,22 +4597,6 @@ task dumpmem;
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0, negedge TAA[2], 1.000, 0.500, NOT_TAA2);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0, negedge TAA[1], 1.000, 0.500, NOT_TAA1);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0, negedge TAA[0], 1.000, 0.500, NOT_TAA0);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[23], 1.000, 0.500, NOT_TDA23);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[22], 1.000, 0.500, NOT_TDA22);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[21], 1.000, 0.500, NOT_TDA21);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[20], 1.000, 0.500, NOT_TDA20);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[19], 1.000, 0.500, NOT_TDA19);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[18], 1.000, 0.500, NOT_TDA18);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[17], 1.000, 0.500, NOT_TDA17);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[16], 1.000, 0.500, NOT_TDA16);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[15], 1.000, 0.500, NOT_TDA15);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[14], 1.000, 0.500, NOT_TDA14);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[13], 1.000, 0.500, NOT_TDA13);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[12], 1.000, 0.500, NOT_TDA12);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[11], 1.000, 0.500, NOT_TDA11);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[10], 1.000, 0.500, NOT_TDA10);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[9], 1.000, 0.500, NOT_TDA9);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[8], 1.000, 0.500, NOT_TDA8);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[7], 1.000, 0.500, NOT_TDA7);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[6], 1.000, 0.500, NOT_TDA6);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[5], 1.000, 0.500, NOT_TDA5);
@@ -6355,22 +4605,6 @@ task dumpmem;
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[2], 1.000, 0.500, NOT_TDA2);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[1], 1.000, 0.500, NOT_TDA1);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, posedge TDA[0], 1.000, 0.500, NOT_TDA0);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[23], 1.000, 0.500, NOT_TDA23);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[22], 1.000, 0.500, NOT_TDA22);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[21], 1.000, 0.500, NOT_TDA21);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[20], 1.000, 0.500, NOT_TDA20);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[19], 1.000, 0.500, NOT_TDA19);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[18], 1.000, 0.500, NOT_TDA18);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[17], 1.000, 0.500, NOT_TDA17);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[16], 1.000, 0.500, NOT_TDA16);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[15], 1.000, 0.500, NOT_TDA15);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[14], 1.000, 0.500, NOT_TDA14);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[13], 1.000, 0.500, NOT_TDA13);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[12], 1.000, 0.500, NOT_TDA12);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[11], 1.000, 0.500, NOT_TDA11);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[10], 1.000, 0.500, NOT_TDA10);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[9], 1.000, 0.500, NOT_TDA9);
-    $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[8], 1.000, 0.500, NOT_TDA8);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[7], 1.000, 0.500, NOT_TDA7);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[6], 1.000, 0.500, NOT_TDA6);
     $setuphold(posedge CLKA &&& TENAeq0andTCENAeq0andTWENAeq0, negedge TDA[5], 1.000, 0.500, NOT_TDA5);
@@ -6404,22 +4638,6 @@ task dumpmem;
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0, negedge TAB[2], 1.000, 0.500, NOT_TAB2);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0, negedge TAB[1], 1.000, 0.500, NOT_TAB1);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0, negedge TAB[0], 1.000, 0.500, NOT_TAB0);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[23], 1.000, 0.500, NOT_TDB23);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[22], 1.000, 0.500, NOT_TDB22);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[21], 1.000, 0.500, NOT_TDB21);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[20], 1.000, 0.500, NOT_TDB20);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[19], 1.000, 0.500, NOT_TDB19);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[18], 1.000, 0.500, NOT_TDB18);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[17], 1.000, 0.500, NOT_TDB17);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[16], 1.000, 0.500, NOT_TDB16);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[15], 1.000, 0.500, NOT_TDB15);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[14], 1.000, 0.500, NOT_TDB14);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[13], 1.000, 0.500, NOT_TDB13);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[12], 1.000, 0.500, NOT_TDB12);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[11], 1.000, 0.500, NOT_TDB11);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[10], 1.000, 0.500, NOT_TDB10);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[9], 1.000, 0.500, NOT_TDB9);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[8], 1.000, 0.500, NOT_TDB8);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[7], 1.000, 0.500, NOT_TDB7);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[6], 1.000, 0.500, NOT_TDB6);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[5], 1.000, 0.500, NOT_TDB5);
@@ -6428,22 +4646,6 @@ task dumpmem;
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[2], 1.000, 0.500, NOT_TDB2);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[1], 1.000, 0.500, NOT_TDB1);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, posedge TDB[0], 1.000, 0.500, NOT_TDB0);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[23], 1.000, 0.500, NOT_TDB23);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[22], 1.000, 0.500, NOT_TDB22);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[21], 1.000, 0.500, NOT_TDB21);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[20], 1.000, 0.500, NOT_TDB20);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[19], 1.000, 0.500, NOT_TDB19);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[18], 1.000, 0.500, NOT_TDB18);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[17], 1.000, 0.500, NOT_TDB17);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[16], 1.000, 0.500, NOT_TDB16);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[15], 1.000, 0.500, NOT_TDB15);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[14], 1.000, 0.500, NOT_TDB14);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[13], 1.000, 0.500, NOT_TDB13);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[12], 1.000, 0.500, NOT_TDB12);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[11], 1.000, 0.500, NOT_TDB11);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[10], 1.000, 0.500, NOT_TDB10);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[9], 1.000, 0.500, NOT_TDB9);
-    $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[8], 1.000, 0.500, NOT_TDB8);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[7], 1.000, 0.500, NOT_TDB7);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[6], 1.000, 0.500, NOT_TDB6);
     $setuphold(posedge CLKB &&& TENBeq0andTCENBeq0andTWENBeq0, negedge TDB[5], 1.000, 0.500, NOT_TDB5);
@@ -6475,23 +4677,23 @@ endmodule
 `endcelldefine
 `endif
 `timescale 1ns/1ps
-module sram_dp_dstFrame_error_injection (Q_out, Q_in, CLK, A, CEN, WEN, BEN, TQ);
-   output [23:0] Q_out;
-   input [23:0] Q_in;
+module sram_dp_desc_8_error_injection (Q_out, Q_in, CLK, A, CEN, WEN, BEN, TQ);
+   output [7:0] Q_out;
+   input [7:0] Q_in;
    input CLK;
    input [8:0] A;
    input CEN;
    input WEN;
    input BEN;
-   input [23:0] TQ;
+   input [7:0] TQ;
    parameter LEFT_RED_COLUMN_FAULT = 2'd1;
    parameter RIGHT_RED_COLUMN_FAULT = 2'd2;
    parameter NO_RED_FAULT = 2'd0;
-   reg [23:0] Q_out;
+   reg [7:0] Q_out;
    reg entry_found;
    reg list_complete;
-   reg [18:0] fault_table [79:0];
-   reg [18:0] fault_entry;
+   reg [16:0] fault_table [31:0];
+   reg [16:0] fault_entry;
 initial
 begin
    `ifdef DUT
@@ -6500,13 +4702,17 @@ begin
        `define pre_pend_path TB.CHIP
    `endif
    `ifdef ARM_NONREPAIRABLE_FAULT
-      `pre_pend_path.SMARCHCHKBVCD_LVISION_MBISTPG_ASSEMBLY_UNDER_TEST_INST.MEM0_MEM_INST.u1.add_fault(9'd182,5'd22,2'd1,2'd0);
+      `pre_pend_path.SMARCHCHKBVCD_LVISION_MBISTPG_ASSEMBLY_UNDER_TEST_INST.MEM0_MEM_INST.u1.add_fault(9'd505,3'd6,2'd1,2'd0);
    `endif
 end
    task add_fault;
    //This task injects fault in memory
+   //In order to inject fault in redundant column for Bit 0 to 3, column address
+   //should have value in range of 12 to 15
+   //In order to inject fault in redundant column for Bit 4 to 7, column address
+   //should have value in range of 0 to 3
       input [8:0] address;
-      input [4:0] bitPlace;
+      input [2:0] bitPlace;
       input [1:0] fault_type;
       input [1:0] red_fault;
  
@@ -6515,7 +4721,7 @@ end
    begin
       done = 1'b0;
       i = 0;
-      while ((!done) && i < 79)
+      while ((!done) && i < 31)
       begin
          fault_entry = fault_table[i];
          if (fault_entry[0] === 1'b0 || fault_entry[0] === 1'bx)
@@ -6523,8 +4729,8 @@ end
             fault_entry[0] = 1'b1;
             fault_entry[2:1] = red_fault;
             fault_entry[4:3] = fault_type;
-            fault_entry[9:5] = bitPlace;
-            fault_entry[18:10] = address;
+            fault_entry[7:5] = bitPlace;
+            fault_entry[16:8] = address;
             fault_table[i] = fault_entry;
             done = 1'b1;
          end
@@ -6536,7 +4742,7 @@ end
 task remove_all_faults;
    integer i;
 begin
-   for (i = 0; i < 80; i=i+1)
+   for (i = 0; i < 32; i=i+1)
    begin
       fault_entry = fault_table[i];
       fault_entry[0] = 1'b0;
@@ -6550,9 +4756,9 @@ task bit_error;
 //
 // This task injects error depending upon fault type to particular bit
 // of the output
-   inout [23:0] q_int;
+   inout [7:0] q_int;
    input [1:0] fault_type;
-   input [4:0] bitLoc;
+   input [2:0] bitLoc;
 begin
    if (fault_type === 2'd0)
       q_int[bitLoc] = 1'b0;
@@ -6573,12 +4779,12 @@ task error_injection_on_output;
 // If fault is repaired using repair bus, this task does not
 // courrpt Q output in read cycle
 //
-   output [23:0] Q_output;
+   output [7:0] Q_output;
    reg list_complete;
    integer i;
-   reg [6:0] row_address;
-   reg [1:0] column_address;
-   reg [4:0] bitPlace;
+   reg [4:0] row_address;
+   reg [3:0] column_address;
+   reg [2:0] bitPlace;
    reg [1:0] fault_type;
    reg [1:0] red_fault;
    reg valid;
@@ -6596,11 +4802,11 @@ begin
       begin
          if (red_fault === NO_RED_FAULT)
          begin
-            if (row_address == A[8:2] && column_address == A[1:0])
+            if (row_address == A[8:4] && column_address == A[3:0])
             begin
-               if (bitPlace < 12)
+               if (bitPlace < 4)
                   bit_error(Q_output,fault_type, bitPlace);
-               else if (bitPlace >= 12 )
+               else if (bitPlace >= 4 )
                   bit_error(Q_output,fault_type, bitPlace);
             end
          end

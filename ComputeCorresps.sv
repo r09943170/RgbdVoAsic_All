@@ -48,30 +48,30 @@ module ComputeCorresps
     // depth_lb_sram interface
     ,input        [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QA
     ,input        [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB
-    ,output                                       o_srcFrame_lb_sram_WENA
-    ,output                                       o_srcFrame_lb_sram_WENB
-    ,output       [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DA
-    ,output       [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DB
-    ,output       [H_SIZE_BW-1:0]                 o_srcFrame_lb_sram_AA
-    ,output       [H_SIZE_BW-1:0]                 o_srcFrame_lb_sram_AB
+    ,output logic                                 o_srcFrame_lb_sram_WENA
+    ,output logic                                 o_srcFrame_lb_sram_WENB
+    ,output logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DA
+    ,output logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DB
+    ,output logic [H_SIZE_BW-1:0]                 o_srcFrame_lb_sram_AA
+    ,output logic [H_SIZE_BW-1:0]                 o_srcFrame_lb_sram_AB
     // dstFrame_lb_sram interface
     ,input        [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_dstFrame_lb_sram_even_QA[0:62]
     ,input        [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_dstFrame_lb_sram_even_QB[0:62]
-    ,output                                       o_dstFrame_lb_sram_even_WENA[0:62]
-    ,output                                       o_dstFrame_lb_sram_even_WENB[0:62]
-    ,output       [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_even_DA[0:62]
-    ,output       [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_even_DB[0:62]
-    ,output       [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_even_AA[0:62]
-    ,output       [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_even_AB[0:62]
+    ,output logic                                 o_dstFrame_lb_sram_even_WENA[0:62]
+    ,output logic                                 o_dstFrame_lb_sram_even_WENB[0:62]
+    ,output logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_even_DA[0:62]
+    ,output logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_even_DB[0:62]
+    ,output logic [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_even_AA[0:62]
+    ,output logic [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_even_AB[0:62]
 
     ,input        [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_dstFrame_lb_sram_odd_QA[0:62]
     ,input        [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_dstFrame_lb_sram_odd_QB[0:62]
-    ,output                                       o_dstFrame_lb_sram_odd_WENA[0:62]
-    ,output                                       o_dstFrame_lb_sram_odd_WENB[0:62]
-    ,output       [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_odd_DA[0:62]
-    ,output       [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_odd_DB[0:62]
-    ,output       [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_odd_AA[0:62]
-    ,output       [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_odd_AB[0:62]
+    ,output logic                                 o_dstFrame_lb_sram_odd_WENA[0:62]
+    ,output logic                                 o_dstFrame_lb_sram_odd_WENB[0:62]
+    ,output logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_odd_DA[0:62]
+    ,output logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_dstFrame_lb_sram_odd_DB[0:62]
+    ,output logic [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_odd_AA[0:62]
+    ,output logic [H_SIZE_BW-2:0]                 o_dstFrame_lb_sram_odd_AB[0:62]
 );
 
     //=================================
@@ -207,6 +207,7 @@ module ComputeCorresps
     logic [DATA_RGB_BW:0]       dI_dy;
         //d9
     logic                       valid_proj_normalUnit_1;
+    logic                       maskdepth_proj_1;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_proj_1_x;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_proj_1_y;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_proj_1_z;

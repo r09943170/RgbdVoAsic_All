@@ -52,7 +52,7 @@
 `timescale 1 ns/1 ps
 // If ARM_UD_MODEL is defined at Simulator Command Line, it Selects the Fast Functional Model
 `ifdef ARM_UD_MODEL
-
+`define ARM_UD_MODEL
 // Following parameter Values can be overridden at Simulator Command Line.
 
 // ARM_UD_DP Defines the delay through Data Paths, for Memory Models it represents BIST MUX output delays.

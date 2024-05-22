@@ -18,7 +18,7 @@
 //       Instance Name:              sram_dp_dstFrame
 //       Words:                      320
 //       Bits:                       24
-//       Mux:                        4
+//       Mux:                        16
 //       Drive:                      6
 //       Write Mask:                 Off
 //       Write Thru:                 Off
@@ -32,7 +32,7 @@
 //       Weak Bit Test:	        Off
 //       Read Disturb Test:	        Off
 //       
-//       Creation Date:  Mon May 20 17:41:31 2024
+//       Creation Date:  Mon Mar  4 14:55:46 2024
 //       Version: 	r5p0
 //
 //      Modeling Assumptions: This model supports full gate level simulation
@@ -71,7 +71,7 @@
 `define ARM_UD_SEQ #0.01
 `endif
 
-`celldefine
+// `celldefine
 // If POWER_PINS is defined at Simulator Command Line, it selects the module definition with Power Ports
 `ifdef POWER_PINS
 module sram_dp_dstFrame (VDDCE, VDDPE, VSSE, CENYA, WENYA, AYA, DYA, CENYB, WENYB,
@@ -88,9 +88,9 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   parameter ASSERT_PREFIX = "";
   parameter BITS = 24;
   parameter WORDS = 320;
-  parameter MUX = 4;
-  parameter MEM_WIDTH = 96; // redun block size 4, 48 on left, 48 on right
-  parameter MEM_HEIGHT = 80;
+  parameter MUX = 16;
+  parameter MEM_WIDTH = 384; // redun block size 4, 192 on left, 192 on right
+  parameter MEM_HEIGHT = 20;
   parameter WP_SIZE = 24 ;
   parameter UPM_WIDTH = 3;
   parameter UPMW_WIDTH = 2;
@@ -148,16 +148,18 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
 
   integer row_address;
   integer mux_address;
-  reg [95:0] mem [0:79];
-  reg [95:0] row;
+  reg [383:0] mem [0:19];
+  reg [383:0] row;
   reg LAST_CLKA;
-  reg [95:0] row_mask;
-  reg [95:0] new_data;
-  reg [95:0] data_out;
-  reg [23:0] readLatch0;
-  reg [23:0] shifted_readLatch0;
-  reg [23:0] readLatch1;
-  reg [23:0] shifted_readLatch1;
+  reg [383:0] row_mask;
+  reg [383:0] new_data;
+  reg [383:0] data_out;
+  reg [95:0] readLatch0;
+  reg [95:0] shifted_readLatch0;
+  reg [1:0] read_mux_sel0;
+  reg [95:0] readLatch1;
+  reg [95:0] shifted_readLatch1;
+  reg [1:0] read_mux_sel1;
   reg LAST_CLKB;
   reg [23:0] QA_int;
   reg [23:0] QA_int_delayed;
@@ -658,25 +660,31 @@ task loadmem;
 	  for (i=0;i<WORDS;i=i+1) begin
 	  wordtemp = memld[i];
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
         writeEnable = {24{1'b1}};
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, wordtemp[23], 3'b000, wordtemp[22], 3'b000, wordtemp[21],
-          3'b000, wordtemp[20], 3'b000, wordtemp[19], 3'b000, wordtemp[18], 3'b000, wordtemp[17],
-          3'b000, wordtemp[16], 3'b000, wordtemp[15], 3'b000, wordtemp[14], 3'b000, wordtemp[13],
-          3'b000, wordtemp[12], 3'b000, wordtemp[11], 3'b000, wordtemp[10], 3'b000, wordtemp[9],
-          3'b000, wordtemp[8], 3'b000, wordtemp[7], 3'b000, wordtemp[6], 3'b000, wordtemp[5],
-          3'b000, wordtemp[4], 3'b000, wordtemp[3], 3'b000, wordtemp[2], 3'b000, wordtemp[1],
-          3'b000, wordtemp[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[23], 15'b000000000000000, writeEnable[22],
+          15'b000000000000000, writeEnable[21], 15'b000000000000000, writeEnable[20],
+          15'b000000000000000, writeEnable[19], 15'b000000000000000, writeEnable[18],
+          15'b000000000000000, writeEnable[17], 15'b000000000000000, writeEnable[16],
+          15'b000000000000000, writeEnable[15], 15'b000000000000000, writeEnable[14],
+          15'b000000000000000, writeEnable[13], 15'b000000000000000, writeEnable[12],
+          15'b000000000000000, writeEnable[11], 15'b000000000000000, writeEnable[10],
+          15'b000000000000000, writeEnable[9], 15'b000000000000000, writeEnable[8],
+          15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, wordtemp[23], 15'b000000000000000, wordtemp[22],
+          15'b000000000000000, wordtemp[21], 15'b000000000000000, wordtemp[20], 15'b000000000000000, wordtemp[19],
+          15'b000000000000000, wordtemp[18], 15'b000000000000000, wordtemp[17], 15'b000000000000000, wordtemp[16],
+          15'b000000000000000, wordtemp[15], 15'b000000000000000, wordtemp[14], 15'b000000000000000, wordtemp[13],
+          15'b000000000000000, wordtemp[12], 15'b000000000000000, wordtemp[11], 15'b000000000000000, wordtemp[10],
+          15'b000000000000000, wordtemp[9], 15'b000000000000000, wordtemp[8], 15'b000000000000000, wordtemp[7],
+          15'b000000000000000, wordtemp[6], 15'b000000000000000, wordtemp[5], 15'b000000000000000, wordtemp[4],
+          15'b000000000000000, wordtemp[3], 15'b000000000000000, wordtemp[2], 15'b000000000000000, wordtemp[1],
+          15'b000000000000000, wordtemp[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
   	end
@@ -694,23 +702,37 @@ task dumpmem;
      if (CENA_ === 1'b1 && CENB_ === 1'b1) begin
 	  for (i=0;i<WORDS;i=i+1) begin
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
         writeEnable = {24{1'b1}};
         data_out = (row >> (mux_address));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
+        readLatch0 = {data_out[380], data_out[376], data_out[372], data_out[368], data_out[364],
+          data_out[360], data_out[356], data_out[352], data_out[348], data_out[344],
+          data_out[340], data_out[336], data_out[332], data_out[328], data_out[324],
+          data_out[320], data_out[316], data_out[312], data_out[308], data_out[304],
+          data_out[300], data_out[296], data_out[292], data_out[288], data_out[284],
+          data_out[280], data_out[276], data_out[272], data_out[268], data_out[264],
+          data_out[260], data_out[256], data_out[252], data_out[248], data_out[244],
+          data_out[240], data_out[236], data_out[232], data_out[228], data_out[224],
+          data_out[220], data_out[216], data_out[212], data_out[208], data_out[204],
+          data_out[200], data_out[196], data_out[192], data_out[188], data_out[184],
+          data_out[180], data_out[176], data_out[172], data_out[168], data_out[164],
+          data_out[160], data_out[156], data_out[152], data_out[148], data_out[144],
+          data_out[140], data_out[136], data_out[132], data_out[128], data_out[124],
+          data_out[120], data_out[116], data_out[112], data_out[108], data_out[104],
+          data_out[100], data_out[96], data_out[92], data_out[88], data_out[84], data_out[80],
+          data_out[76], data_out[72], data_out[68], data_out[64], data_out[60], data_out[56],
+          data_out[52], data_out[48], data_out[44], data_out[40], data_out[36], data_out[32],
+          data_out[28], data_out[24], data_out[20], data_out[16], data_out[12], data_out[8],
+          data_out[4], data_out[0]};
       shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+      QA_int = {shifted_readLatch0[92], shifted_readLatch0[88], shifted_readLatch0[84],
+        shifted_readLatch0[80], shifted_readLatch0[76], shifted_readLatch0[72], shifted_readLatch0[68],
+        shifted_readLatch0[64], shifted_readLatch0[60], shifted_readLatch0[56], shifted_readLatch0[52],
+        shifted_readLatch0[48], shifted_readLatch0[44], shifted_readLatch0[40], shifted_readLatch0[36],
+        shifted_readLatch0[32], shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
    	$fdisplay(dump_file_desc, "%b", QA_int);
   end
@@ -741,45 +763,65 @@ task dumpmem;
       failedWrite(0);
       QA_int = {24{1'bx}};
     end else if (CENA_int === 1'b0) begin
-      mux_address = (AA_int & 2'b11);
-      row_address = (AA_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AA_int & 4'b1111);
+      row_address = (AA_int >> 4);
+      if (row_address > 19)
+        row = {384{1'bx}};
       else
         row = mem[row_address];
       writeEnable = ~{24{WENA_int}};
       if (WENA_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DA_int[23], 3'b000, DA_int[22], 3'b000, DA_int[21],
-          3'b000, DA_int[20], 3'b000, DA_int[19], 3'b000, DA_int[18], 3'b000, DA_int[17],
-          3'b000, DA_int[16], 3'b000, DA_int[15], 3'b000, DA_int[14], 3'b000, DA_int[13],
-          3'b000, DA_int[12], 3'b000, DA_int[11], 3'b000, DA_int[10], 3'b000, DA_int[9],
-          3'b000, DA_int[8], 3'b000, DA_int[7], 3'b000, DA_int[6], 3'b000, DA_int[5],
-          3'b000, DA_int[4], 3'b000, DA_int[3], 3'b000, DA_int[2], 3'b000, DA_int[1],
-          3'b000, DA_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[23], 15'b000000000000000, writeEnable[22],
+          15'b000000000000000, writeEnable[21], 15'b000000000000000, writeEnable[20],
+          15'b000000000000000, writeEnable[19], 15'b000000000000000, writeEnable[18],
+          15'b000000000000000, writeEnable[17], 15'b000000000000000, writeEnable[16],
+          15'b000000000000000, writeEnable[15], 15'b000000000000000, writeEnable[14],
+          15'b000000000000000, writeEnable[13], 15'b000000000000000, writeEnable[12],
+          15'b000000000000000, writeEnable[11], 15'b000000000000000, writeEnable[10],
+          15'b000000000000000, writeEnable[9], 15'b000000000000000, writeEnable[8],
+          15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DA_int[23], 15'b000000000000000, DA_int[22],
+          15'b000000000000000, DA_int[21], 15'b000000000000000, DA_int[20], 15'b000000000000000, DA_int[19],
+          15'b000000000000000, DA_int[18], 15'b000000000000000, DA_int[17], 15'b000000000000000, DA_int[16],
+          15'b000000000000000, DA_int[15], 15'b000000000000000, DA_int[14], 15'b000000000000000, DA_int[13],
+          15'b000000000000000, DA_int[12], 15'b000000000000000, DA_int[11], 15'b000000000000000, DA_int[10],
+          15'b000000000000000, DA_int[9], 15'b000000000000000, DA_int[8], 15'b000000000000000, DA_int[7],
+          15'b000000000000000, DA_int[6], 15'b000000000000000, DA_int[5], 15'b000000000000000, DA_int[4],
+          15'b000000000000000, DA_int[3], 15'b000000000000000, DA_int[2], 15'b000000000000000, DA_int[1],
+          15'b000000000000000, DA_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+        readLatch0 = {data_out[380], data_out[376], data_out[372], data_out[368], data_out[364],
+          data_out[360], data_out[356], data_out[352], data_out[348], data_out[344],
+          data_out[340], data_out[336], data_out[332], data_out[328], data_out[324],
+          data_out[320], data_out[316], data_out[312], data_out[308], data_out[304],
+          data_out[300], data_out[296], data_out[292], data_out[288], data_out[284],
+          data_out[280], data_out[276], data_out[272], data_out[268], data_out[264],
+          data_out[260], data_out[256], data_out[252], data_out[248], data_out[244],
+          data_out[240], data_out[236], data_out[232], data_out[228], data_out[224],
+          data_out[220], data_out[216], data_out[212], data_out[208], data_out[204],
+          data_out[200], data_out[196], data_out[192], data_out[188], data_out[184],
+          data_out[180], data_out[176], data_out[172], data_out[168], data_out[164],
+          data_out[160], data_out[156], data_out[152], data_out[148], data_out[144],
+          data_out[140], data_out[136], data_out[132], data_out[128], data_out[124],
+          data_out[120], data_out[116], data_out[112], data_out[108], data_out[104],
+          data_out[100], data_out[96], data_out[92], data_out[88], data_out[84], data_out[80],
+          data_out[76], data_out[72], data_out[68], data_out[64], data_out[60], data_out[56],
+          data_out[52], data_out[48], data_out[44], data_out[40], data_out[36], data_out[32],
+          data_out[28], data_out[24], data_out[20], data_out[16], data_out[12], data_out[8],
+          data_out[4], data_out[0]};
+      shifted_readLatch0 = (readLatch0 >> AA_int[3:2]);
+      QA_int = {shifted_readLatch0[92], shifted_readLatch0[88], shifted_readLatch0[84],
+        shifted_readLatch0[80], shifted_readLatch0[76], shifted_readLatch0[72], shifted_readLatch0[68],
+        shifted_readLatch0[64], shifted_readLatch0[60], shifted_readLatch0[56], shifted_readLatch0[52],
+        shifted_readLatch0[48], shifted_readLatch0[44], shifted_readLatch0[40], shifted_readLatch0[36],
+        shifted_readLatch0[32], shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
       end
     end
@@ -887,6 +929,8 @@ task dumpmem;
         TCENA_int = TCENA_;
         TAA_int = TAA_;
         TDA_int = TDA_;
+        if (WENA_int === 1'b1)
+          read_mux_sel0 = (TENA_ ? AA_[3:2] : TAA_[3:2] );
       end
       clk0_int = 1'b0;
       if (CENA_int === 1'b0 && WENA_int === 1'b1) 
@@ -1035,45 +1079,65 @@ task dumpmem;
       failedWrite(1);
       QB_int = {24{1'bx}};
     end else if (CENB_int === 1'b0) begin
-      mux_address = (AB_int & 2'b11);
-      row_address = (AB_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AB_int & 4'b1111);
+      row_address = (AB_int >> 4);
+      if (row_address > 19)
+        row = {384{1'bx}};
       else
         row = mem[row_address];
       writeEnable = ~{24{WENB_int}};
       if (WENB_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DB_int[23], 3'b000, DB_int[22], 3'b000, DB_int[21],
-          3'b000, DB_int[20], 3'b000, DB_int[19], 3'b000, DB_int[18], 3'b000, DB_int[17],
-          3'b000, DB_int[16], 3'b000, DB_int[15], 3'b000, DB_int[14], 3'b000, DB_int[13],
-          3'b000, DB_int[12], 3'b000, DB_int[11], 3'b000, DB_int[10], 3'b000, DB_int[9],
-          3'b000, DB_int[8], 3'b000, DB_int[7], 3'b000, DB_int[6], 3'b000, DB_int[5],
-          3'b000, DB_int[4], 3'b000, DB_int[3], 3'b000, DB_int[2], 3'b000, DB_int[1],
-          3'b000, DB_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[23], 15'b000000000000000, writeEnable[22],
+          15'b000000000000000, writeEnable[21], 15'b000000000000000, writeEnable[20],
+          15'b000000000000000, writeEnable[19], 15'b000000000000000, writeEnable[18],
+          15'b000000000000000, writeEnable[17], 15'b000000000000000, writeEnable[16],
+          15'b000000000000000, writeEnable[15], 15'b000000000000000, writeEnable[14],
+          15'b000000000000000, writeEnable[13], 15'b000000000000000, writeEnable[12],
+          15'b000000000000000, writeEnable[11], 15'b000000000000000, writeEnable[10],
+          15'b000000000000000, writeEnable[9], 15'b000000000000000, writeEnable[8],
+          15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DB_int[23], 15'b000000000000000, DB_int[22],
+          15'b000000000000000, DB_int[21], 15'b000000000000000, DB_int[20], 15'b000000000000000, DB_int[19],
+          15'b000000000000000, DB_int[18], 15'b000000000000000, DB_int[17], 15'b000000000000000, DB_int[16],
+          15'b000000000000000, DB_int[15], 15'b000000000000000, DB_int[14], 15'b000000000000000, DB_int[13],
+          15'b000000000000000, DB_int[12], 15'b000000000000000, DB_int[11], 15'b000000000000000, DB_int[10],
+          15'b000000000000000, DB_int[9], 15'b000000000000000, DB_int[8], 15'b000000000000000, DB_int[7],
+          15'b000000000000000, DB_int[6], 15'b000000000000000, DB_int[5], 15'b000000000000000, DB_int[4],
+          15'b000000000000000, DB_int[3], 15'b000000000000000, DB_int[2], 15'b000000000000000, DB_int[1],
+          15'b000000000000000, DB_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch1 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch1 = readLatch1;
-      QB_int = {shifted_readLatch1[23], shifted_readLatch1[22], shifted_readLatch1[21],
-        shifted_readLatch1[20], shifted_readLatch1[19], shifted_readLatch1[18], shifted_readLatch1[17],
-        shifted_readLatch1[16], shifted_readLatch1[15], shifted_readLatch1[14], shifted_readLatch1[13],
-        shifted_readLatch1[12], shifted_readLatch1[11], shifted_readLatch1[10], shifted_readLatch1[9],
-        shifted_readLatch1[8], shifted_readLatch1[7], shifted_readLatch1[6], shifted_readLatch1[5],
-        shifted_readLatch1[4], shifted_readLatch1[3], shifted_readLatch1[2], shifted_readLatch1[1],
+        readLatch1 = {data_out[380], data_out[376], data_out[372], data_out[368], data_out[364],
+          data_out[360], data_out[356], data_out[352], data_out[348], data_out[344],
+          data_out[340], data_out[336], data_out[332], data_out[328], data_out[324],
+          data_out[320], data_out[316], data_out[312], data_out[308], data_out[304],
+          data_out[300], data_out[296], data_out[292], data_out[288], data_out[284],
+          data_out[280], data_out[276], data_out[272], data_out[268], data_out[264],
+          data_out[260], data_out[256], data_out[252], data_out[248], data_out[244],
+          data_out[240], data_out[236], data_out[232], data_out[228], data_out[224],
+          data_out[220], data_out[216], data_out[212], data_out[208], data_out[204],
+          data_out[200], data_out[196], data_out[192], data_out[188], data_out[184],
+          data_out[180], data_out[176], data_out[172], data_out[168], data_out[164],
+          data_out[160], data_out[156], data_out[152], data_out[148], data_out[144],
+          data_out[140], data_out[136], data_out[132], data_out[128], data_out[124],
+          data_out[120], data_out[116], data_out[112], data_out[108], data_out[104],
+          data_out[100], data_out[96], data_out[92], data_out[88], data_out[84], data_out[80],
+          data_out[76], data_out[72], data_out[68], data_out[64], data_out[60], data_out[56],
+          data_out[52], data_out[48], data_out[44], data_out[40], data_out[36], data_out[32],
+          data_out[28], data_out[24], data_out[20], data_out[16], data_out[12], data_out[8],
+          data_out[4], data_out[0]};
+      shifted_readLatch1 = (readLatch1 >> AB_int[3:2]);
+      QB_int = {shifted_readLatch1[92], shifted_readLatch1[88], shifted_readLatch1[84],
+        shifted_readLatch1[80], shifted_readLatch1[76], shifted_readLatch1[72], shifted_readLatch1[68],
+        shifted_readLatch1[64], shifted_readLatch1[60], shifted_readLatch1[56], shifted_readLatch1[52],
+        shifted_readLatch1[48], shifted_readLatch1[44], shifted_readLatch1[40], shifted_readLatch1[36],
+        shifted_readLatch1[32], shifted_readLatch1[28], shifted_readLatch1[24], shifted_readLatch1[20],
+        shifted_readLatch1[16], shifted_readLatch1[12], shifted_readLatch1[8], shifted_readLatch1[4],
         shifted_readLatch1[0]};
       end
     end
@@ -1181,6 +1245,8 @@ task dumpmem;
         TCENB_int = TCENB_;
         TAB_int = TAB_;
         TDB_int = TDB_;
+        if (WENB_int === 1'b1)
+          read_mux_sel1 = (TENB_ ? AB_[3:2] : TAB_[3:2] );
       end
       clk1_int = 1'b0;
       if (CENB_int === 1'b0 && WENB_int === 1'b1) 
@@ -1319,8 +1385,8 @@ task dumpmem;
     reg anyWrite;
   begin
     anyWrite = ((& wena) === 1'b1 && (& wenb) === 1'b1) ? 1'b0 : 1'b1;
-    sameMux = (aa[1:0] == ab[1:0]) ? 1'b1 : 1'b0;
-    if (aa[8:2] == ab[8:2]) begin
+    sameMux = (aa[3:0] == ab[3:0]) ? 1'b1 : 1'b0;
+    if (aa[8:4] == ab[8:4]) begin
       sameRow = 1'b1;
     end else begin
       sameRow = 1'b0;
@@ -1338,7 +1404,7 @@ task dumpmem;
     input [8:0] aa;
     input [8:0] ab;
   begin
-    if (aa[1:0] == ab[1:0])
+    if (aa[3:0] == ab[3:0])
       col_contention = 1'b1;
     else
       col_contention = 1'b0;
@@ -1384,9 +1450,9 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
   parameter ASSERT_PREFIX = "";
   parameter BITS = 24;
   parameter WORDS = 320;
-  parameter MUX = 4;
-  parameter MEM_WIDTH = 96; // redun block size 4, 48 on left, 48 on right
-  parameter MEM_HEIGHT = 80;
+  parameter MUX = 16;
+  parameter MEM_WIDTH = 384; // redun block size 4, 192 on left, 192 on right
+  parameter MEM_HEIGHT = 20;
   parameter WP_SIZE = 24 ;
   parameter UPM_WIDTH = 3;
   parameter UPMW_WIDTH = 2;
@@ -1444,16 +1510,18 @@ module sram_dp_dstFrame (CENYA, WENYA, AYA, DYA, CENYB, WENYB, AYB, DYB, QA, QB,
 
   integer row_address;
   integer mux_address;
-  reg [95:0] mem [0:79];
-  reg [95:0] row;
+  reg [383:0] mem [0:19];
+  reg [383:0] row;
   reg LAST_CLKA;
-  reg [95:0] row_mask;
-  reg [95:0] new_data;
-  reg [95:0] data_out;
-  reg [23:0] readLatch0;
-  reg [23:0] shifted_readLatch0;
-  reg [23:0] readLatch1;
-  reg [23:0] shifted_readLatch1;
+  reg [383:0] row_mask;
+  reg [383:0] new_data;
+  reg [383:0] data_out;
+  reg [95:0] readLatch0;
+  reg [95:0] shifted_readLatch0;
+  reg [1:0] read_mux_sel0;
+  reg [95:0] readLatch1;
+  reg [95:0] shifted_readLatch1;
+  reg [1:0] read_mux_sel1;
   reg LAST_CLKB;
   reg [23:0] QA_int;
   reg [23:0] QA_int_delayed;
@@ -1958,25 +2026,31 @@ task loadmem;
 	  for (i=0;i<WORDS;i=i+1) begin
 	  wordtemp = memld[i];
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
         writeEnable = {24{1'b1}};
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, wordtemp[23], 3'b000, wordtemp[22], 3'b000, wordtemp[21],
-          3'b000, wordtemp[20], 3'b000, wordtemp[19], 3'b000, wordtemp[18], 3'b000, wordtemp[17],
-          3'b000, wordtemp[16], 3'b000, wordtemp[15], 3'b000, wordtemp[14], 3'b000, wordtemp[13],
-          3'b000, wordtemp[12], 3'b000, wordtemp[11], 3'b000, wordtemp[10], 3'b000, wordtemp[9],
-          3'b000, wordtemp[8], 3'b000, wordtemp[7], 3'b000, wordtemp[6], 3'b000, wordtemp[5],
-          3'b000, wordtemp[4], 3'b000, wordtemp[3], 3'b000, wordtemp[2], 3'b000, wordtemp[1],
-          3'b000, wordtemp[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[23], 15'b000000000000000, writeEnable[22],
+          15'b000000000000000, writeEnable[21], 15'b000000000000000, writeEnable[20],
+          15'b000000000000000, writeEnable[19], 15'b000000000000000, writeEnable[18],
+          15'b000000000000000, writeEnable[17], 15'b000000000000000, writeEnable[16],
+          15'b000000000000000, writeEnable[15], 15'b000000000000000, writeEnable[14],
+          15'b000000000000000, writeEnable[13], 15'b000000000000000, writeEnable[12],
+          15'b000000000000000, writeEnable[11], 15'b000000000000000, writeEnable[10],
+          15'b000000000000000, writeEnable[9], 15'b000000000000000, writeEnable[8],
+          15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, wordtemp[23], 15'b000000000000000, wordtemp[22],
+          15'b000000000000000, wordtemp[21], 15'b000000000000000, wordtemp[20], 15'b000000000000000, wordtemp[19],
+          15'b000000000000000, wordtemp[18], 15'b000000000000000, wordtemp[17], 15'b000000000000000, wordtemp[16],
+          15'b000000000000000, wordtemp[15], 15'b000000000000000, wordtemp[14], 15'b000000000000000, wordtemp[13],
+          15'b000000000000000, wordtemp[12], 15'b000000000000000, wordtemp[11], 15'b000000000000000, wordtemp[10],
+          15'b000000000000000, wordtemp[9], 15'b000000000000000, wordtemp[8], 15'b000000000000000, wordtemp[7],
+          15'b000000000000000, wordtemp[6], 15'b000000000000000, wordtemp[5], 15'b000000000000000, wordtemp[4],
+          15'b000000000000000, wordtemp[3], 15'b000000000000000, wordtemp[2], 15'b000000000000000, wordtemp[1],
+          15'b000000000000000, wordtemp[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
   	end
@@ -1994,23 +2068,37 @@ task dumpmem;
      if (CENA_ === 1'b1 && CENB_ === 1'b1) begin
 	  for (i=0;i<WORDS;i=i+1) begin
 	  Atemp = i;
-	  mux_address = (Atemp & 2'b11);
-      row_address = (Atemp >> 2);
+	  mux_address = (Atemp & 4'b1111);
+      row_address = (Atemp >> 4);
       row = mem[row_address];
         writeEnable = {24{1'b1}};
         data_out = (row >> (mux_address));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
+        readLatch0 = {data_out[380], data_out[376], data_out[372], data_out[368], data_out[364],
+          data_out[360], data_out[356], data_out[352], data_out[348], data_out[344],
+          data_out[340], data_out[336], data_out[332], data_out[328], data_out[324],
+          data_out[320], data_out[316], data_out[312], data_out[308], data_out[304],
+          data_out[300], data_out[296], data_out[292], data_out[288], data_out[284],
+          data_out[280], data_out[276], data_out[272], data_out[268], data_out[264],
+          data_out[260], data_out[256], data_out[252], data_out[248], data_out[244],
+          data_out[240], data_out[236], data_out[232], data_out[228], data_out[224],
+          data_out[220], data_out[216], data_out[212], data_out[208], data_out[204],
+          data_out[200], data_out[196], data_out[192], data_out[188], data_out[184],
+          data_out[180], data_out[176], data_out[172], data_out[168], data_out[164],
+          data_out[160], data_out[156], data_out[152], data_out[148], data_out[144],
+          data_out[140], data_out[136], data_out[132], data_out[128], data_out[124],
+          data_out[120], data_out[116], data_out[112], data_out[108], data_out[104],
+          data_out[100], data_out[96], data_out[92], data_out[88], data_out[84], data_out[80],
+          data_out[76], data_out[72], data_out[68], data_out[64], data_out[60], data_out[56],
+          data_out[52], data_out[48], data_out[44], data_out[40], data_out[36], data_out[32],
+          data_out[28], data_out[24], data_out[20], data_out[16], data_out[12], data_out[8],
+          data_out[4], data_out[0]};
       shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+      QA_int = {shifted_readLatch0[92], shifted_readLatch0[88], shifted_readLatch0[84],
+        shifted_readLatch0[80], shifted_readLatch0[76], shifted_readLatch0[72], shifted_readLatch0[68],
+        shifted_readLatch0[64], shifted_readLatch0[60], shifted_readLatch0[56], shifted_readLatch0[52],
+        shifted_readLatch0[48], shifted_readLatch0[44], shifted_readLatch0[40], shifted_readLatch0[36],
+        shifted_readLatch0[32], shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
    	$fdisplay(dump_file_desc, "%b", QA_int);
   end
@@ -2041,45 +2129,65 @@ task dumpmem;
       failedWrite(0);
       QA_int = {24{1'bx}};
     end else if (CENA_int === 1'b0) begin
-      mux_address = (AA_int & 2'b11);
-      row_address = (AA_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AA_int & 4'b1111);
+      row_address = (AA_int >> 4);
+      if (row_address > 19)
+        row = {384{1'bx}};
       else
         row = mem[row_address];
       writeEnable = ~{24{WENA_int}};
       if (WENA_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DA_int[23], 3'b000, DA_int[22], 3'b000, DA_int[21],
-          3'b000, DA_int[20], 3'b000, DA_int[19], 3'b000, DA_int[18], 3'b000, DA_int[17],
-          3'b000, DA_int[16], 3'b000, DA_int[15], 3'b000, DA_int[14], 3'b000, DA_int[13],
-          3'b000, DA_int[12], 3'b000, DA_int[11], 3'b000, DA_int[10], 3'b000, DA_int[9],
-          3'b000, DA_int[8], 3'b000, DA_int[7], 3'b000, DA_int[6], 3'b000, DA_int[5],
-          3'b000, DA_int[4], 3'b000, DA_int[3], 3'b000, DA_int[2], 3'b000, DA_int[1],
-          3'b000, DA_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[23], 15'b000000000000000, writeEnable[22],
+          15'b000000000000000, writeEnable[21], 15'b000000000000000, writeEnable[20],
+          15'b000000000000000, writeEnable[19], 15'b000000000000000, writeEnable[18],
+          15'b000000000000000, writeEnable[17], 15'b000000000000000, writeEnable[16],
+          15'b000000000000000, writeEnable[15], 15'b000000000000000, writeEnable[14],
+          15'b000000000000000, writeEnable[13], 15'b000000000000000, writeEnable[12],
+          15'b000000000000000, writeEnable[11], 15'b000000000000000, writeEnable[10],
+          15'b000000000000000, writeEnable[9], 15'b000000000000000, writeEnable[8],
+          15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DA_int[23], 15'b000000000000000, DA_int[22],
+          15'b000000000000000, DA_int[21], 15'b000000000000000, DA_int[20], 15'b000000000000000, DA_int[19],
+          15'b000000000000000, DA_int[18], 15'b000000000000000, DA_int[17], 15'b000000000000000, DA_int[16],
+          15'b000000000000000, DA_int[15], 15'b000000000000000, DA_int[14], 15'b000000000000000, DA_int[13],
+          15'b000000000000000, DA_int[12], 15'b000000000000000, DA_int[11], 15'b000000000000000, DA_int[10],
+          15'b000000000000000, DA_int[9], 15'b000000000000000, DA_int[8], 15'b000000000000000, DA_int[7],
+          15'b000000000000000, DA_int[6], 15'b000000000000000, DA_int[5], 15'b000000000000000, DA_int[4],
+          15'b000000000000000, DA_int[3], 15'b000000000000000, DA_int[2], 15'b000000000000000, DA_int[1],
+          15'b000000000000000, DA_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch0 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch0 = readLatch0;
-      QA_int = {shifted_readLatch0[23], shifted_readLatch0[22], shifted_readLatch0[21],
-        shifted_readLatch0[20], shifted_readLatch0[19], shifted_readLatch0[18], shifted_readLatch0[17],
-        shifted_readLatch0[16], shifted_readLatch0[15], shifted_readLatch0[14], shifted_readLatch0[13],
-        shifted_readLatch0[12], shifted_readLatch0[11], shifted_readLatch0[10], shifted_readLatch0[9],
-        shifted_readLatch0[8], shifted_readLatch0[7], shifted_readLatch0[6], shifted_readLatch0[5],
-        shifted_readLatch0[4], shifted_readLatch0[3], shifted_readLatch0[2], shifted_readLatch0[1],
+        readLatch0 = {data_out[380], data_out[376], data_out[372], data_out[368], data_out[364],
+          data_out[360], data_out[356], data_out[352], data_out[348], data_out[344],
+          data_out[340], data_out[336], data_out[332], data_out[328], data_out[324],
+          data_out[320], data_out[316], data_out[312], data_out[308], data_out[304],
+          data_out[300], data_out[296], data_out[292], data_out[288], data_out[284],
+          data_out[280], data_out[276], data_out[272], data_out[268], data_out[264],
+          data_out[260], data_out[256], data_out[252], data_out[248], data_out[244],
+          data_out[240], data_out[236], data_out[232], data_out[228], data_out[224],
+          data_out[220], data_out[216], data_out[212], data_out[208], data_out[204],
+          data_out[200], data_out[196], data_out[192], data_out[188], data_out[184],
+          data_out[180], data_out[176], data_out[172], data_out[168], data_out[164],
+          data_out[160], data_out[156], data_out[152], data_out[148], data_out[144],
+          data_out[140], data_out[136], data_out[132], data_out[128], data_out[124],
+          data_out[120], data_out[116], data_out[112], data_out[108], data_out[104],
+          data_out[100], data_out[96], data_out[92], data_out[88], data_out[84], data_out[80],
+          data_out[76], data_out[72], data_out[68], data_out[64], data_out[60], data_out[56],
+          data_out[52], data_out[48], data_out[44], data_out[40], data_out[36], data_out[32],
+          data_out[28], data_out[24], data_out[20], data_out[16], data_out[12], data_out[8],
+          data_out[4], data_out[0]};
+      shifted_readLatch0 = (readLatch0 >> AA_int[3:2]);
+      QA_int = {shifted_readLatch0[92], shifted_readLatch0[88], shifted_readLatch0[84],
+        shifted_readLatch0[80], shifted_readLatch0[76], shifted_readLatch0[72], shifted_readLatch0[68],
+        shifted_readLatch0[64], shifted_readLatch0[60], shifted_readLatch0[56], shifted_readLatch0[52],
+        shifted_readLatch0[48], shifted_readLatch0[44], shifted_readLatch0[40], shifted_readLatch0[36],
+        shifted_readLatch0[32], shifted_readLatch0[28], shifted_readLatch0[24], shifted_readLatch0[20],
+        shifted_readLatch0[16], shifted_readLatch0[12], shifted_readLatch0[8], shifted_readLatch0[4],
         shifted_readLatch0[0]};
       end
     end
@@ -2187,6 +2295,8 @@ task dumpmem;
         TCENA_int = TCENA_;
         TAA_int = TAA_;
         TDA_int = TDA_;
+        if (WENA_int === 1'b1)
+          read_mux_sel0 = (TENA_ ? AA_[3:2] : TAA_[3:2] );
       end
       clk0_int = 1'b0;
       if (CENA_int === 1'b0 && WENA_int === 1'b1) 
@@ -2464,45 +2574,65 @@ task dumpmem;
       failedWrite(1);
       QB_int = {24{1'bx}};
     end else if (CENB_int === 1'b0) begin
-      mux_address = (AB_int & 2'b11);
-      row_address = (AB_int >> 2);
-      if (row_address > 79)
-        row = {96{1'bx}};
+      mux_address = (AB_int & 4'b1111);
+      row_address = (AB_int >> 4);
+      if (row_address > 19)
+        row = {384{1'bx}};
       else
         row = mem[row_address];
       writeEnable = ~{24{WENB_int}};
       if (WENB_int !== 1'b1) begin
-        row_mask =  ( {3'b000, writeEnable[23], 3'b000, writeEnable[22], 3'b000, writeEnable[21],
-          3'b000, writeEnable[20], 3'b000, writeEnable[19], 3'b000, writeEnable[18],
-          3'b000, writeEnable[17], 3'b000, writeEnable[16], 3'b000, writeEnable[15],
-          3'b000, writeEnable[14], 3'b000, writeEnable[13], 3'b000, writeEnable[12],
-          3'b000, writeEnable[11], 3'b000, writeEnable[10], 3'b000, writeEnable[9],
-          3'b000, writeEnable[8], 3'b000, writeEnable[7], 3'b000, writeEnable[6], 3'b000, writeEnable[5],
-          3'b000, writeEnable[4], 3'b000, writeEnable[3], 3'b000, writeEnable[2], 3'b000, writeEnable[1],
-          3'b000, writeEnable[0]} << mux_address);
-        new_data =  ( {3'b000, DB_int[23], 3'b000, DB_int[22], 3'b000, DB_int[21],
-          3'b000, DB_int[20], 3'b000, DB_int[19], 3'b000, DB_int[18], 3'b000, DB_int[17],
-          3'b000, DB_int[16], 3'b000, DB_int[15], 3'b000, DB_int[14], 3'b000, DB_int[13],
-          3'b000, DB_int[12], 3'b000, DB_int[11], 3'b000, DB_int[10], 3'b000, DB_int[9],
-          3'b000, DB_int[8], 3'b000, DB_int[7], 3'b000, DB_int[6], 3'b000, DB_int[5],
-          3'b000, DB_int[4], 3'b000, DB_int[3], 3'b000, DB_int[2], 3'b000, DB_int[1],
-          3'b000, DB_int[0]} << mux_address);
+        row_mask =  ( {15'b000000000000000, writeEnable[23], 15'b000000000000000, writeEnable[22],
+          15'b000000000000000, writeEnable[21], 15'b000000000000000, writeEnable[20],
+          15'b000000000000000, writeEnable[19], 15'b000000000000000, writeEnable[18],
+          15'b000000000000000, writeEnable[17], 15'b000000000000000, writeEnable[16],
+          15'b000000000000000, writeEnable[15], 15'b000000000000000, writeEnable[14],
+          15'b000000000000000, writeEnable[13], 15'b000000000000000, writeEnable[12],
+          15'b000000000000000, writeEnable[11], 15'b000000000000000, writeEnable[10],
+          15'b000000000000000, writeEnable[9], 15'b000000000000000, writeEnable[8],
+          15'b000000000000000, writeEnable[7], 15'b000000000000000, writeEnable[6],
+          15'b000000000000000, writeEnable[5], 15'b000000000000000, writeEnable[4],
+          15'b000000000000000, writeEnable[3], 15'b000000000000000, writeEnable[2],
+          15'b000000000000000, writeEnable[1], 15'b000000000000000, writeEnable[0]} << mux_address);
+        new_data =  ( {15'b000000000000000, DB_int[23], 15'b000000000000000, DB_int[22],
+          15'b000000000000000, DB_int[21], 15'b000000000000000, DB_int[20], 15'b000000000000000, DB_int[19],
+          15'b000000000000000, DB_int[18], 15'b000000000000000, DB_int[17], 15'b000000000000000, DB_int[16],
+          15'b000000000000000, DB_int[15], 15'b000000000000000, DB_int[14], 15'b000000000000000, DB_int[13],
+          15'b000000000000000, DB_int[12], 15'b000000000000000, DB_int[11], 15'b000000000000000, DB_int[10],
+          15'b000000000000000, DB_int[9], 15'b000000000000000, DB_int[8], 15'b000000000000000, DB_int[7],
+          15'b000000000000000, DB_int[6], 15'b000000000000000, DB_int[5], 15'b000000000000000, DB_int[4],
+          15'b000000000000000, DB_int[3], 15'b000000000000000, DB_int[2], 15'b000000000000000, DB_int[1],
+          15'b000000000000000, DB_int[0]} << mux_address);
         row = (row & ~row_mask) | (row_mask & (~row_mask | new_data));
         mem[row_address] = row;
       end else begin
         data_out = (row >> (mux_address%4));
-        readLatch1 = {data_out[92], data_out[88], data_out[84], data_out[80], data_out[76],
-          data_out[72], data_out[68], data_out[64], data_out[60], data_out[56], data_out[52],
-          data_out[48], data_out[44], data_out[40], data_out[36], data_out[32], data_out[28],
-          data_out[24], data_out[20], data_out[16], data_out[12], data_out[8], data_out[4],
-          data_out[0]};
-      shifted_readLatch1 = readLatch1;
-      QB_int = {shifted_readLatch1[23], shifted_readLatch1[22], shifted_readLatch1[21],
-        shifted_readLatch1[20], shifted_readLatch1[19], shifted_readLatch1[18], shifted_readLatch1[17],
-        shifted_readLatch1[16], shifted_readLatch1[15], shifted_readLatch1[14], shifted_readLatch1[13],
-        shifted_readLatch1[12], shifted_readLatch1[11], shifted_readLatch1[10], shifted_readLatch1[9],
-        shifted_readLatch1[8], shifted_readLatch1[7], shifted_readLatch1[6], shifted_readLatch1[5],
-        shifted_readLatch1[4], shifted_readLatch1[3], shifted_readLatch1[2], shifted_readLatch1[1],
+        readLatch1 = {data_out[380], data_out[376], data_out[372], data_out[368], data_out[364],
+          data_out[360], data_out[356], data_out[352], data_out[348], data_out[344],
+          data_out[340], data_out[336], data_out[332], data_out[328], data_out[324],
+          data_out[320], data_out[316], data_out[312], data_out[308], data_out[304],
+          data_out[300], data_out[296], data_out[292], data_out[288], data_out[284],
+          data_out[280], data_out[276], data_out[272], data_out[268], data_out[264],
+          data_out[260], data_out[256], data_out[252], data_out[248], data_out[244],
+          data_out[240], data_out[236], data_out[232], data_out[228], data_out[224],
+          data_out[220], data_out[216], data_out[212], data_out[208], data_out[204],
+          data_out[200], data_out[196], data_out[192], data_out[188], data_out[184],
+          data_out[180], data_out[176], data_out[172], data_out[168], data_out[164],
+          data_out[160], data_out[156], data_out[152], data_out[148], data_out[144],
+          data_out[140], data_out[136], data_out[132], data_out[128], data_out[124],
+          data_out[120], data_out[116], data_out[112], data_out[108], data_out[104],
+          data_out[100], data_out[96], data_out[92], data_out[88], data_out[84], data_out[80],
+          data_out[76], data_out[72], data_out[68], data_out[64], data_out[60], data_out[56],
+          data_out[52], data_out[48], data_out[44], data_out[40], data_out[36], data_out[32],
+          data_out[28], data_out[24], data_out[20], data_out[16], data_out[12], data_out[8],
+          data_out[4], data_out[0]};
+      shifted_readLatch1 = (readLatch1 >> AB_int[3:2]);
+      QB_int = {shifted_readLatch1[92], shifted_readLatch1[88], shifted_readLatch1[84],
+        shifted_readLatch1[80], shifted_readLatch1[76], shifted_readLatch1[72], shifted_readLatch1[68],
+        shifted_readLatch1[64], shifted_readLatch1[60], shifted_readLatch1[56], shifted_readLatch1[52],
+        shifted_readLatch1[48], shifted_readLatch1[44], shifted_readLatch1[40], shifted_readLatch1[36],
+        shifted_readLatch1[32], shifted_readLatch1[28], shifted_readLatch1[24], shifted_readLatch1[20],
+        shifted_readLatch1[16], shifted_readLatch1[12], shifted_readLatch1[8], shifted_readLatch1[4],
         shifted_readLatch1[0]};
       end
     end
@@ -2610,6 +2740,8 @@ task dumpmem;
         TCENB_int = TCENB_;
         TAB_int = TAB_;
         TDB_int = TDB_;
+        if (WENB_int === 1'b1)
+          read_mux_sel1 = (TENB_ ? AB_[3:2] : TAB_[3:2] );
       end
       clk1_int = 1'b0;
       if (CENB_int === 1'b0 && WENB_int === 1'b1) 
@@ -2877,8 +3009,8 @@ task dumpmem;
     reg anyWrite;
   begin
     anyWrite = ((& wena) === 1'b1 && (& wenb) === 1'b1) ? 1'b0 : 1'b1;
-    sameMux = (aa[1:0] == ab[1:0]) ? 1'b1 : 1'b0;
-    if (aa[8:2] == ab[8:2]) begin
+    sameMux = (aa[3:0] == ab[3:0]) ? 1'b1 : 1'b0;
+    if (aa[8:4] == ab[8:4]) begin
       sameRow = 1'b1;
     end else begin
       sameRow = 1'b0;
@@ -2896,7 +3028,7 @@ task dumpmem;
     input [8:0] aa;
     input [8:0] ab;
   begin
-    if (aa[1:0] == ab[1:0])
+    if (aa[3:0] == ab[3:0])
       col_contention = 1'b1;
     else
       col_contention = 1'b0;
@@ -6490,7 +6622,7 @@ module sram_dp_dstFrame_error_injection (Q_out, Q_in, CLK, A, CEN, WEN, BEN, TQ)
    reg [23:0] Q_out;
    reg entry_found;
    reg list_complete;
-   reg [18:0] fault_table [79:0];
+   reg [18:0] fault_table [19:0];
    reg [18:0] fault_entry;
 initial
 begin
@@ -6505,6 +6637,10 @@ begin
 end
    task add_fault;
    //This task injects fault in memory
+   //In order to inject fault in redundant column for Bit 0 to 11, column address
+   //should have value in range of 12 to 15
+   //In order to inject fault in redundant column for Bit 12 to 23, column address
+   //should have value in range of 0 to 3
       input [8:0] address;
       input [4:0] bitPlace;
       input [1:0] fault_type;
@@ -6515,7 +6651,7 @@ end
    begin
       done = 1'b0;
       i = 0;
-      while ((!done) && i < 79)
+      while ((!done) && i < 19)
       begin
          fault_entry = fault_table[i];
          if (fault_entry[0] === 1'b0 || fault_entry[0] === 1'bx)
@@ -6536,7 +6672,7 @@ end
 task remove_all_faults;
    integer i;
 begin
-   for (i = 0; i < 80; i=i+1)
+   for (i = 0; i < 20; i=i+1)
    begin
       fault_entry = fault_table[i];
       fault_entry[0] = 1'b0;
@@ -6576,8 +6712,8 @@ task error_injection_on_output;
    output [23:0] Q_output;
    reg list_complete;
    integer i;
-   reg [6:0] row_address;
-   reg [1:0] column_address;
+   reg [4:0] row_address;
+   reg [3:0] column_address;
    reg [4:0] bitPlace;
    reg [1:0] fault_type;
    reg [1:0] red_fault;
@@ -6596,7 +6732,7 @@ begin
       begin
          if (red_fault === NO_RED_FAULT)
          begin
-            if (row_address == A[8:2] && column_address == A[1:0])
+            if (row_address == A[8:4] && column_address == A[3:0])
             begin
                if (bitPlace < 12)
                   bit_error(Q_output,fault_type, bitPlace);

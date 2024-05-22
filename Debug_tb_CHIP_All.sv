@@ -25,13 +25,8 @@
     `include "MATCH_mem.sv"     //MATCH_Top.sv
     `include "HAMMING.sv"           //MATCH.sv
     `include "sram_v3/sram_lb_FAST.v"
-    `include "sram_v3/sram_FIFO_NMS.v"
-    `include "sram_v3/sram_dp_sincos.v"
-    `include "sram_v3/sram_BRIEF_lb.v"
-    `include "sram_v3/sram_dp_desc.v"
-    `include "sram_v3/sram_dp_point.v"
-    `include "sram_v3/sram_dp_depth.v"
     `include "sram_v3/sram_dp_dstFrame.v"
+    `include "sram_v3/sram_dp_desc_8.v"
     `include "./DW02_mult_2_stage.v"
     `include "./DW_div.v"
     `include "./DW_div_pipe.v"
