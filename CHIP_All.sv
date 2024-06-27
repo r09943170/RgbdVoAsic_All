@@ -53,7 +53,7 @@
 `include "./OuterProduct.sv"
 `include "./CalcICPLsmMatrices.sv"
 `include "./CalcRgbdLsmMatrices.sv"
-`include "./sigma_icp_generator_v3.sv"
+`include "./sigma_icp_generator.sv"
 `include "./sigma_rgbd_generator.sv"
 `include "./AtA_AtB_of_Direct.sv"
 `include "./gradient.sv"
