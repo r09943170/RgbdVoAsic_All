@@ -106,22 +106,15 @@ module UpdatePose
         endcase
     end
 	
-    
-    DW_mult_pipe #(
-         .a_width(POSE_BW)
-        ,.b_width(POSE_BW)
-        ,.num_stages(2)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
+    DW02_mult_2_stage #(
+         .A_width(POSE_BW)
+        ,.B_width(POSE_BW)
     ) u_mult (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.tc(1'b1)
-        ,.a(a)
-        ,.b(b)
-        ,.product(product)
+         .A(a)
+        ,.B(b)
+        ,.TC(1'b1)
+        ,.CLK(i_clk)
+        ,.PRODUCT(product)
     );
 
     always_comb begin

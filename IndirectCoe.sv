@@ -5,7 +5,7 @@
 // ---------------------------
 // Li-Yang Huang <lyhuang@media.ee.ntu.edu.tw>, 2023
 
-`include "common/RgbdVoConfigPk.sv"
+// `include "common/RgbdVoConfigPk.sv"
 
 //13T
 module IndirectCoe

@@ -6,7 +6,7 @@
 // Li-Yang Huang <lyhuang@media.ee.ntu.edu.tw>, 2022
 
 
-`include "common/RgbdVoConfigPk.sv"
+// `include "common/RgbdVoConfigPk.sv"
 //`include "./DW02_mult_2_stage.v"
 //`include "./DataDelay.sv"
 

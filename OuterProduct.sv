@@ -8,7 +8,7 @@
 `ifndef __OUTERPRODUCT_SV__
 `define __OUTERPRODUCT_SV__
 
-`include "common/RgbdVoConfigPk.sv"
+// `include "common/RgbdVoConfigPk.sv"
 //`include "./DW02_mult_2_stage.v"
 //`include "./DataDelay.sv"
 
