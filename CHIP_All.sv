@@ -28,11 +28,11 @@
 `include "sram_v3/sram_dp_dstFrame.v"
 `include "sram_v3/sram_dp_desc_8.v"
 `include "./DW02_mult_2_stage.v"
-`include "./DW_div.v"
+`include "/opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver/DW_div.v"
 `include "./DW_div_pipe.v"
 `include "./DW02_mult.v"
 `include "./DW_mult_pipe.v"
-`include "./DW_sqrt.v"
+`include "/opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver/DW_sqrt.v"
 `include "./DW_sqrt_pipe.v" //Rodrigues.sv"
 `include "./DW_sincos.v"    //Rodrigues.sv"
 `include "./Idx2Cloud.sv"
@@ -53,10 +53,12 @@
 `include "./OuterProduct.sv"
 `include "./CalcICPLsmMatrices.sv"
 `include "./CalcRgbdLsmMatrices.sv"
-`include "./sigma_icp_generator.sv"
+`include "./sigma_icp_generator_v3.sv"
 `include "./sigma_rgbd_generator.sv"
 `include "./AtA_AtB_of_Direct.sv"
 `include "./gradient.sv"
+`include "./seq_div_unsign.sv"
+`include "./seq_div_sign.sv"
 
 module CHIP_All
     import RgbdVoConfigPk::*;
@@ -114,6 +116,9 @@ module CHIP_All
     logic [H_SIZE_BW-1:0]       dst_coor_x;
     logic [V_SIZE_BW-1:0]       dst_coor_y;
     logic [DATA_DEPTH_BW-1:0]   dst_depth;
+
+    logic                       feature_frame_start_pass;
+    logic                       feature_valid_pass;
 
     logic [3:0]                 count_of_f;
     logic [7:0]                 number_feature_match;
@@ -614,7 +619,7 @@ module CHIP_All
         Feature_dstFrame_lb_sram_even_DA[4] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-V_SIZE_BW){1'b0}}, {dst_coor_y}}    : 0;
         // Feature_dstFrame_lb_sram_even_DA[5] = (!i_f_or_d) ? {{(DATA_RGB_BW+DATA_DEPTH_BW-DATA_DEPTH_BW){1'b0}}, {dst_depth}} : 0;
         for(int i = 0; i <= 4; i = i + 1)begin
-            Feature_dstFrame_lb_sram_even_WENA[i] = (!i_f_or_d) ? ((count_of_f == 0) ? (!feature_valid) : 1) : 1;
+            Feature_dstFrame_lb_sram_even_WENA[i] = (!i_f_or_d) ? ((count_of_f == 0) ? (!feature_valid_pass) : 1) : 1;
             Feature_dstFrame_lb_sram_even_WENB[i] = (!i_f_or_d) ? 1 : 1;
             Feature_dstFrame_lb_sram_even_DB[i] = (!i_f_or_d) ? 0 : 0;
             Feature_dstFrame_lb_sram_even_AA[i] = (!i_f_or_d) ? ((count_of_f == 0) ? {{1'b0},{number_feature_match}} : {{1'b0},{counter_feature_match}}) : 0;
@@ -755,16 +760,19 @@ module CHIP_All
         ,.o_data(cnt_en_d3)
     );
 
+    assign feature_frame_start_pass = (feature_frame_start && !feature_ready);
+    assign feature_valid_pass = (feature_valid && !feature_ready);
+
     assign cnt_en = ((count_of_f > 0) && (counter_feature_match < number_feature_match)) ? 1 : 0;
 
-    assign i_id_frame_start = i_f_or_d ? 0 : ((count_of_f == 0) ? feature_frame_start : ((cnt_en_d3 == 0) && (cnt_en_d2 == 1)));
-    assign i_id_frame_end   = i_f_or_d ? 0 : ((count_of_f == 0) ? feature_frame_end   : ((cnt_en_d3 == 1) && (cnt_en_d2 == 0)));
-    assign i_id_valid       = i_f_or_d ? 0 : ((count_of_f == 0) ? feature_valid       : cnt_en_d2);
-    assign i_id_u0          = i_f_or_d ? 0 : ((count_of_f == 0) ? src_coor_x          : u0_r);
-    assign i_id_v0          = i_f_or_d ? 0 : ((count_of_f == 0) ? src_coor_y          : v0_r);
-    assign i_id_d0          = i_f_or_d ? 0 : ((count_of_f == 0) ? src_depth           : d0_r);
-    assign i_id_u1          = i_f_or_d ? 0 : ((count_of_f == 0) ? dst_coor_x          : u1_r);
-    assign i_id_v1          = i_f_or_d ? 0 : ((count_of_f == 0) ? dst_coor_y          : v1_r);
+    assign i_id_frame_start = i_f_or_d ? 0 : ((count_of_f == 0) ? feature_frame_start_pass : ((cnt_en_d3 == 0) && (cnt_en_d2 == 1)));
+    assign i_id_frame_end   = i_f_or_d ? 0 : ((count_of_f == 0) ? feature_frame_end        : ((cnt_en_d3 == 1) && (cnt_en_d2 == 0)));
+    assign i_id_valid       = i_f_or_d ? 0 : ((count_of_f == 0) ? feature_valid_pass       : cnt_en_d2);
+    assign i_id_u0          = i_f_or_d ? 0 : ((count_of_f == 0) ? src_coor_x               : u0_r);
+    assign i_id_v0          = i_f_or_d ? 0 : ((count_of_f == 0) ? src_coor_y               : v0_r);
+    assign i_id_d0          = i_f_or_d ? 0 : ((count_of_f == 0) ? src_depth                : d0_r);
+    assign i_id_u1          = i_f_or_d ? 0 : ((count_of_f == 0) ? dst_coor_x               : u1_r);
+    assign i_id_v1          = i_f_or_d ? 0 : ((count_of_f == 0) ? dst_coor_y               : v1_r);
     IndirectCalc u_indirect_calc(
         // input                
          .i_clk         ( i_clk )
@@ -1365,10 +1373,10 @@ module CHIP_All
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
-        if (!i_rst_n)           number_feature_match <= 0;
-        else if (i_f_or_d)      number_feature_match <= 0;
-        else if (feature_valid) number_feature_match <= number_feature_match + 1;
-        else                    number_feature_match <= number_feature_match;
+        if (!i_rst_n)                number_feature_match <= 0;
+        else if (i_f_or_d)           number_feature_match <= 0;
+        else if (feature_valid_pass) number_feature_match <= number_feature_match + 1;
+        else                         number_feature_match <= number_feature_match;
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin

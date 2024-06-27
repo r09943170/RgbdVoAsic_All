@@ -46,6 +46,7 @@ logic [31:0] my_square_w, my_square_r;
 logic [32:0] square_sum_w, square_sum_r;
 logic [16:0] sqrt_w;
 logic [16:0] sqrt_r;
+logic [16:0] b_div;
 
 // numerator
 logic mx_signed_1_w, mx_signed_1_r;
@@ -120,9 +121,11 @@ always_comb begin
 
 end
 
-DW_div_inst #(26, 0, 0) UX (.a({mx_abs_4_r, 10'd0}), .b({9'd0, sqrt_r}), .quotient(cos_abs_w), .remainder(), .divide_by_0());
-DW_div_inst #(26, 0, 0) UY (.a({my_abs_4_r, 10'd0}), .b({9'd0, sqrt_r}), .quotient(sin_abs_w), .remainder(), .divide_by_0());
-DW_sqrt_inst #(33, 0) U1 (.radicand(square_sum_r), .square_root(sqrt_w));
+assign b_div = sqrt_r == 0 ? 1 : sqrt_r;
+
+DW_div #(26, 26, 0, 0) UX (.a({mx_abs_4_r, 10'd0}), .b({9'd0, b_div}), .quotient(cos_abs_w), .remainder(), .divide_by_0());
+DW_div #(26, 26, 0, 0) UY (.a({my_abs_4_r, 10'd0}), .b({9'd0, b_div}), .quotient(sin_abs_w), .remainder(), .divide_by_0());
+DW_sqrt #(33, 0) U1 (.a(square_sum_r), .root(sqrt_w));
 
 // ========== Connection ==========
 assign o_cos = cos_r;

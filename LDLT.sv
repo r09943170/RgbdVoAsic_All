@@ -69,11 +69,13 @@ module LDLT
     logic  state_r, state_w;
     logic signed [MATRIX_BW - 1 : 0] Mat_r [36];	
     logic signed [2 * MATRIX_BW - 1 : 0] Mat_w [36];
-    logic [7:0] cnt_r, cnt_w;
+    logic [10:0] cnt_r, cnt_w;
     genvar i;
     integer j;
     logic signed [MATRIX_BW+MUL-1:0] a;
     logic signed [MATRIX_BW-1:0] b;
+    logic        div_i_valid;
+    logic        div_o_valid;
     logic signed [MATRIX_BW+MUL-1:0] quotient;
     logic signed [MATRIX_BW-1:0] c, d;
     logic signed [MATRIX_BW+MATRIX_BW-1:0] product;
@@ -121,116 +123,95 @@ module LDLT
 
     always_comb begin
         case(cnt_r)
-           'd1 : begin a = {Mat_r[1] ,{MUL{1'b0}}}; b = Mat_r[0]; end   //L[1,0] = u[0,1]/D[0]
-           'd2 : begin a = {Mat_r[1] ,{MUL{1'b0}}}; b = Mat_r[0]; end 
-           'd3 : begin a = {Mat_r[2] ,{MUL{1'b0}}}; b = Mat_r[0]; end   //L[2,0] = u[0,2]/D[0]
-           'd4 : begin a = {Mat_r[2] ,{MUL{1'b0}}}; b = Mat_r[0]; end 
-           'd5 : begin a = {Mat_r[3] ,{MUL{1'b0}}}; b = Mat_r[0]; end   //L[3,0] = u[0,3]/D[0]
-           'd6 : begin a = {Mat_r[3] ,{MUL{1'b0}}}; b = Mat_r[0]; end 
-           'd7 : begin a = {Mat_r[4] ,{MUL{1'b0}}}; b = Mat_r[0]; end   //L[4,0] = u[0,4]/D[0]
-           'd8 : begin a = {Mat_r[4] ,{MUL{1'b0}}}; b = Mat_r[0]; end 
-           'd9 : begin a = {Mat_r[5] ,{MUL{1'b0}}}; b = Mat_r[0]; end   //L[5,0] = u[0,5]/D[0]
-           'd10: begin a = {Mat_r[5] ,{MUL{1'b0}}}; b = Mat_r[0]; end 
-           'd18: begin a = {Mat_r[8] ,{MUL{1'b0}}}; b = Mat_r[7]; end   //L[2,1] = u[1,2]/D[1]
-           'd19: begin a = {Mat_r[8] ,{MUL{1'b0}}}; b = Mat_r[7]; end 
-           'd24: begin a = {Mat_r[9] ,{MUL{1'b0}}}; b = Mat_r[7]; end   //L[3,1] = u[1,3]/D[1]
-           'd25: begin a = {Mat_r[9] ,{MUL{1'b0}}}; b = Mat_r[7]; end 
-           'd30: begin a = {Mat_r[10],{MUL{1'b0}}}; b = Mat_r[7]; end   //L[4,1] = u[1,4]/D[1]
-           'd31: begin a = {Mat_r[10],{MUL{1'b0}}}; b = Mat_r[7]; end  
-           'd36: begin a = {Mat_r[11],{MUL{1'b0}}}; b = Mat_r[7]; end   //L[5,1] = u[1,5]/D[1]
-           'd37: begin a = {Mat_r[11],{MUL{1'b0}}}; b = Mat_r[7]; end 
-           'd51: begin a = {Mat_r[15],{MUL{1'b0}}}; b = Mat_r[14]; end  //L[3,2] = u[2,3]/D[2]	
-           'd52: begin a = {Mat_r[15],{MUL{1'b0}}}; b = Mat_r[14]; end 
-           'd60: begin a = {Mat_r[16],{MUL{1'b0}}}; b = Mat_r[14]; end  //L[4,2] = u[2,4]/D[2]
-           'd61: begin a = {Mat_r[16],{MUL{1'b0}}}; b = Mat_r[14]; end  
-           'd69: begin a = {Mat_r[17],{MUL{1'b0}}}; b = Mat_r[14]; end  //L[5,2] = u[2,5]/D[2]
-           'd70: begin a = {Mat_r[17],{MUL{1'b0}}}; b = Mat_r[14]; end  
-           'd90: begin a = {Mat_r[22],{MUL{1'b0}}}; b = Mat_r[21]; end  //L[4,3] = u[3,4]/D[3]
-           'd91: begin a = {Mat_r[22],{MUL{1'b0}}}; b = Mat_r[21]; end  
-           'd102: begin a = {Mat_r[23],{MUL{1'b0}}}; b = Mat_r[21]; end //L[5,3] = u[3,5]/D[3]
-           'd103: begin a = {Mat_r[23],{MUL{1'b0}}}; b = Mat_r[21]; end 
-           'd129: begin a = {Mat_r[29],{MUL{1'b0}}}; b = Mat_r[28]; end //L[5,4] = u[4,5]/D[4]
-           'd130: begin a = {Mat_r[29],{MUL{1'b0}}}; b = Mat_r[28]; end  
-            default: begin a = '0; b = '1; end
+           'd1   : begin a = {Mat_r[1] ,{MUL{1'b0}}}; b = Mat_r[0] ; div_i_valid = '1; end  //L[1,0] = u[0,1]/D[0]
+           'd91  : begin a = {Mat_r[2] ,{MUL{1'b0}}}; b = Mat_r[0] ; div_i_valid = '1; end  //L[2,0] = u[0,2]/D[0]
+           'd181 : begin a = {Mat_r[3] ,{MUL{1'b0}}}; b = Mat_r[0] ; div_i_valid = '1; end  //L[3,0] = u[0,3]/D[0]
+           'd271 : begin a = {Mat_r[4] ,{MUL{1'b0}}}; b = Mat_r[0] ; div_i_valid = '1; end  //L[4,0] = u[0,4]/D[0]
+           'd361 : begin a = {Mat_r[5] ,{MUL{1'b0}}}; b = Mat_r[0] ; div_i_valid = '1; end  //L[5,0] = u[0,5]/D[0]
+           'd451 : begin a = {Mat_r[8] ,{MUL{1'b0}}}; b = Mat_r[7] ; div_i_valid = '1; end  //L[2,1] = u[1,2]/D[1]
+           'd541 : begin a = {Mat_r[9] ,{MUL{1'b0}}}; b = Mat_r[7] ; div_i_valid = '1; end  //L[3,1] = u[1,3]/D[1]
+           'd631 : begin a = {Mat_r[10],{MUL{1'b0}}}; b = Mat_r[7] ; div_i_valid = '1; end  //L[4,1] = u[1,4]/D[1]
+           'd721 : begin a = {Mat_r[11],{MUL{1'b0}}}; b = Mat_r[7] ; div_i_valid = '1; end  //L[5,1] = u[1,5]/D[1]
+           'd811 : begin a = {Mat_r[15],{MUL{1'b0}}}; b = Mat_r[14]; div_i_valid = '1; end  //L[3,2] = u[2,3]/D[2]	
+           'd901 : begin a = {Mat_r[16],{MUL{1'b0}}}; b = Mat_r[14]; div_i_valid = '1; end  //L[4,2] = u[2,4]/D[2]
+           'd991 : begin a = {Mat_r[17],{MUL{1'b0}}}; b = Mat_r[14]; div_i_valid = '1; end  //L[5,2] = u[2,5]/D[2]
+           'd1081: begin a = {Mat_r[22],{MUL{1'b0}}}; b = Mat_r[21]; div_i_valid = '1; end  //L[4,3] = u[3,4]/D[3]
+           'd1171: begin a = {Mat_r[23],{MUL{1'b0}}}; b = Mat_r[21]; div_i_valid = '1; end  //L[5,3] = u[3,5]/D[3]
+           'd1261: begin a = {Mat_r[29],{MUL{1'b0}}}; b = Mat_r[28]; div_i_valid = '1; end  //L[5,4] = u[4,5]/D[4]
+            default: begin a = '0; b = '1; div_i_valid = '0; end
         endcase
     end
     
-    DW_div_pipe #(
-         .a_width(MATRIX_BW+MUL)
-        ,.b_width(MATRIX_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(a)
-        ,.b(b)
-        ,.quotient(quotient)
-        ,.remainder()
-        ,.divide_by_0()
+    seq_div_sign 
+    #(
+         .DEND_WIDTH(MATRIX_BW+MUL)
+        ,.DSOR_WIDTH(MATRIX_BW)
+        ,.CNT_WIDTH(7)
+    )
+    u_seq_div_sign
+    (
+        // input
+         .i_clk     ( i_clk )
+        ,.i_rst_n   ( i_rst_n )
+        ,.i_valid   ( div_i_valid )
+        ,.i_Dend    ( a )
+        ,.i_Dsor    ( b )
+        // output
+        ,.o_valid   ( div_o_valid )
+        ,.o_Quot    ( quotient )
+        ,.o_Rder    (  )
     );
 
     always_comb begin
         case(cnt_r)
-            'd12: begin c = Mat_r[1]; d = Mat_r[6]; end     // u[0,1]*L[1,0]
-            'd15: begin c = Mat_r[2]; d = Mat_r[6]; end     // u[0,2]*L[1,0]
-            'd21: begin c = Mat_r[3]; d = Mat_r[6]; end     // u[0,3]*L[1,0]
-            'd27: begin c = Mat_r[4]; d = Mat_r[6]; end     // u[0,4]*L[1,0]
-            'd33: begin c = Mat_r[5]; d = Mat_r[6]; end     // u[0,5]*L[1,0]
-            'd39: begin c = Mat_r[2]; d = Mat_r[12]; end    // u[0,2]*L[2,0]
-            'd42: begin c = Mat_r[8]; d = Mat_r[13]; end    // u[1,2]*L[2,1]
-            'd45: begin c = Mat_r[3]; d = Mat_r[12]; end    // u[0,3]*L[2,0]
-            'd48: begin c = Mat_r[9]; d = Mat_r[13]; end    // u[1,3]*L[2,1]
-            'd54: begin c = Mat_r[4]; d = Mat_r[12]; end    // u[0,4]*L[2,0]
-            'd57: begin c = Mat_r[10]; d = Mat_r[13]; end 	// u[1,4]*L[2,1]
-            'd63: begin c = Mat_r[5]; d = Mat_r[12]; end    // u[0,5]*L[2,0]
-            'd66: begin c = Mat_r[11]; d = Mat_r[13]; end 	// u[1,5]*L[2,1]
-            'd72: begin c = Mat_r[3]; d = Mat_r[18]; end    // u[0,3]*L[3,0]
-            'd75: begin c = Mat_r[9]; d = Mat_r[19]; end    // u[1,3]*L[3,1]
-            'd78: begin c = Mat_r[15]; d = Mat_r[20]; end   // u[2,3]*L[3,2]
-            'd81: begin c = Mat_r[4]; d = Mat_r[18]; end    // u[0,4]*L[3,0]
-            'd84: begin c = Mat_r[10]; d = Mat_r[19]; end   // u[1,4]*L[3,1]
-            'd87: begin c = Mat_r[16]; d = Mat_r[20]; end 	// u[2,4]*L[3,2]
-            'd93: begin c = Mat_r[5]; d = Mat_r[18]; end    // u[0,5]*L[3,0]
-            'd96: begin c = Mat_r[11]; d = Mat_r[19]; end   // u[1,5]*L[3,1]
-            'd99: begin c = Mat_r[17]; d = Mat_r[20]; end 	// u[2,5]*L[3,2]
-            'd105: begin c = Mat_r[4]; d = Mat_r[24]; end   // u[0,4]*L[4,0]
-            'd108: begin c = Mat_r[10]; d = Mat_r[25]; end  // u[1,4]*L[4,1]
-            'd111: begin c = Mat_r[16]; d = Mat_r[26]; end  // u[2,4]*L[4,2]
-            'd114: begin c = Mat_r[22]; d = Mat_r[27]; end  // u[3,4]*L[4,3]
-            'd117: begin c = Mat_r[5]; d = Mat_r[24]; end   // u[0,5]*L[4,0]
-            'd120: begin c = Mat_r[11]; d = Mat_r[25]; end  // u[1,5]*L[4,1]
-            'd123: begin c = Mat_r[17]; d = Mat_r[26]; end  // u[2,5]*L[4,2]
-            'd126: begin c = Mat_r[23]; d = Mat_r[27]; end  // u[3,5]*L[4,3]
-            'd132: begin c = Mat_r[5]; d = Mat_r[30]; end   // u[0,5]*L[5,0]
-            'd135: begin c = Mat_r[11]; d = Mat_r[31]; end  // u[1,5]*L[5,1]
-            'd138: begin c = Mat_r[17]; d = Mat_r[32]; end  // u[2,5]*L[5,2]
-            'd141: begin c = Mat_r[23]; d = Mat_r[33]; end  // u[3,5]*L[5,3]
-            'd144: begin c = Mat_r[29]; d = Mat_r[34]; end  // u[4,5]*L[5,4]
+            'd91  : begin c = Mat_r[1] ; d = Mat_r[6] ; end    // u[0,1]*L[1,0]
+            'd92  : begin c = Mat_r[2] ; d = Mat_r[6] ; end    // u[0,2]*L[1,0]
+            'd93  : begin c = Mat_r[3] ; d = Mat_r[6] ; end    // u[0,3]*L[1,0]
+            'd94  : begin c = Mat_r[4] ; d = Mat_r[6] ; end    // u[0,4]*L[1,0]
+            'd95  : begin c = Mat_r[5] ; d = Mat_r[6] ; end    // u[0,5]*L[1,0]
+            'd181 : begin c = Mat_r[2] ; d = Mat_r[12]; end    // u[0,2]*L[2,0]
+            'd182 : begin c = Mat_r[3] ; d = Mat_r[12]; end    // u[0,3]*L[2,0]
+            'd183 : begin c = Mat_r[4] ; d = Mat_r[12]; end    // u[0,4]*L[2,0]
+            'd184 : begin c = Mat_r[5] ; d = Mat_r[12]; end    // u[0,5]*L[2,0]
+            'd271 : begin c = Mat_r[3] ; d = Mat_r[18]; end    // u[0,3]*L[3,0]
+            'd272 : begin c = Mat_r[4] ; d = Mat_r[18]; end    // u[0,4]*L[3,0]
+            'd273 : begin c = Mat_r[5] ; d = Mat_r[18]; end    // u[0,5]*L[3,0]
+            'd361 : begin c = Mat_r[4] ; d = Mat_r[24]; end    // u[0,4]*L[4,0]
+            'd362 : begin c = Mat_r[5] ; d = Mat_r[24]; end    // u[0,5]*L[4,0]
+            'd451 : begin c = Mat_r[5] ; d = Mat_r[30]; end    // u[0,5]*L[5,0]
+            'd541 : begin c = Mat_r[8] ; d = Mat_r[13]; end    // u[1,2]*L[2,1]
+            'd542 : begin c = Mat_r[9] ; d = Mat_r[13]; end    // u[1,3]*L[2,1]
+            'd543 : begin c = Mat_r[10]; d = Mat_r[13]; end	   // u[1,4]*L[2,1]
+            'd544 : begin c = Mat_r[11]; d = Mat_r[13]; end	   // u[1,5]*L[2,1]
+            'd631 : begin c = Mat_r[9] ; d = Mat_r[19]; end    // u[1,3]*L[3,1]
+            'd632 : begin c = Mat_r[10]; d = Mat_r[19]; end    // u[1,4]*L[3,1]
+            'd633 : begin c = Mat_r[11]; d = Mat_r[19]; end    // u[1,5]*L[3,1]
+            'd721 : begin c = Mat_r[10]; d = Mat_r[25]; end    // u[1,4]*L[4,1]
+            'd722 : begin c = Mat_r[11]; d = Mat_r[25]; end    // u[1,5]*L[4,1]
+            'd811 : begin c = Mat_r[11]; d = Mat_r[31]; end    // u[1,5]*L[5,1]
+            'd901 : begin c = Mat_r[15]; d = Mat_r[20]; end    // u[2,3]*L[3,2]
+            'd902 : begin c = Mat_r[16]; d = Mat_r[20]; end    // u[2,4]*L[3,2]
+            'd903 : begin c = Mat_r[17]; d = Mat_r[20]; end    // u[2,5]*L[3,2]
+            'd991 : begin c = Mat_r[16]; d = Mat_r[26]; end    // u[2,4]*L[4,2]
+            'd992 : begin c = Mat_r[17]; d = Mat_r[26]; end    // u[2,5]*L[4,2]
+            'd1081: begin c = Mat_r[17]; d = Mat_r[32]; end    // u[2,5]*L[5,2]
+            'd1171: begin c = Mat_r[22]; d = Mat_r[27]; end    // u[3,4]*L[4,3]
+            'd1172: begin c = Mat_r[23]; d = Mat_r[27]; end    // u[3,5]*L[4,3] 
+            'd1261: begin c = Mat_r[23]; d = Mat_r[33]; end    // u[3,5]*L[5,3]
+            'd1351: begin c = Mat_r[29]; d = Mat_r[34]; end    // u[4,5]*L[5,4]
             default: begin c = '0; d = '0; end
         endcase
     end
     
-    DW_mult_pipe #(
-         .a_width(MATRIX_BW)
-        ,.b_width(MATRIX_BW)
-        ,.num_stages(2)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
+    DW02_mult_2_stage #(
+         .A_width(MATRIX_BW)
+        ,.B_width(MATRIX_BW)
     ) u_mult (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.tc(1'b1)
-        ,.a(c)
-        ,.b(d)
-        ,.product(product)
+         .A(c)
+        ,.B(d)
+        ,.TC(1'b1)
+        ,.CLK(i_clk)
+        ,.PRODUCT(product)
     );
 
     always_comb begin
@@ -276,56 +257,56 @@ module LDLT
             for (j= 0; j < 36 ; j = j + 1) 
                 Mat_w[j] = Mat_r[j];				
             case(cnt_r)
-                'd3 : Mat_w[6] = quotient;                      //L[1,0] = u[0,1]/D[0]
-                'd5 : Mat_w[12] = quotient;                     //L[2,0] = u[0,2]/D[0]
-                'd7 : Mat_w[18] = quotient;                     //L[3,0] = u[0,3]/D[0]
-                'd9 : Mat_w[24] = quotient;                     //L[4,0] = u[0,4]/D[0]
-                'd11: Mat_w[30] = quotient;                     //L[5,0] = u[0,5]/D[0]
-                'd14: Mat_w[7] = Mat_r[7] - product_shift_r;    //D[1] = A[1,1] (- u[0,1]*L[1,0])
-                'd17: Mat_w[8] = Mat_r[8] - product_shift_r;    //u[1,2] = A[1,2] (- u[0,2]*L[1,0])
-                'd20: Mat_w[13] = quotient;                     //L[2,1] = u[1,2]/D[1]
-                'd23: Mat_w[9]  = Mat_r[9] - product_shift_r;   //u[1,3] = A[1,3] (- u[0,3]*L[1,0])
-                'd26: Mat_w[19] = quotient;                     //L[3,1] = u[1,3]/D[1]
-                'd29: Mat_w[10] = Mat_r[10] - product_shift_r;  //u[1,4] = A[1,4] (- u[0,4]*L[1,0])
-                'd32: Mat_w[25] = quotient;                     //L[4,1] = u[1,4]/D[1]
-                'd35: Mat_w[11] = Mat_r[11] - product_shift_r;  //u[1,5] = A[1,5] (- u[0,5]*L[1,0])
-                'd38: Mat_w[31] = quotient;                     //L[5,1] = u[1,5]/D[1]
-                'd41: Mat_w[14] = Mat_r[14] - product_shift_r;  //D[2] = A[2,2] (- u[0,2]*L[2,0]) - u[1,2]*L[2,1]
-                'd44: Mat_w[14] = Mat_r[14] - product_shift_r;  //D[2] = A[2,2] - u[0,2]*L[2,0] (- u[1,2]*L[2,1])
-                'd47: Mat_w[15] = Mat_r[15] - product_shift_r;  //u[2,3] = A[2,3] (- u[0,3]*L[2,0]) - u[1,3]*L[2,1]
-                'd50: Mat_w[15] = Mat_r[15] - product_shift_r;  //u[2,3] = A[2,3] - u[0,3]*L[2,0] (- u[1,3]*L[2,1])
-                'd53: Mat_w[20] = quotient;                     //L[3,2] = u[2,3]/D[2]
-                'd56: Mat_w[16] = Mat_r[16] - product_shift_r;  //u[2,4] = A[2,4] (- u[0,4]*L[2,0]) - u[1,4]*L[2,1]
-                'd59: Mat_w[16] = Mat_r[16] - product_shift_r;  //u[2,4] = A[2,4] - u[0,4]*L[2,0] (- u[1,4]*L[2,1])
-                'd62: Mat_w[26] = quotient;                     //L[4,2] = u[2,4]/D[2]
-                'd65: Mat_w[17] = Mat_r[17] - product_shift_r;  //u[2,5] = A[2,5] (- u[0,5]*L[2,0]) - u[1,5]*L[2,1]
-                'd68: Mat_w[17] = Mat_r[17] - product_shift_r; 	//u[2,5] = A[2,5] - u[0,5]*L[2,0] (- u[1,5]*L[2,1])
-                'd71: Mat_w[32] = quotient; 	                //L[5,2] = u[2,5]/D[2]
-                'd74: Mat_w[21] = Mat_r[21] - product_shift_r;  //D[3] = A[3,3] (- u[0,3]*L[3,0]) - u[1,3]*L[3,1] - u[2,3]*L[3,2]
-                'd77: Mat_w[21] = Mat_r[21] - product_shift_r;  //D[3] = A[3,3] - u[0,3]*L[3,0] (- u[1,3]*L[3,1]) - u[2,3]*L[3,2]
-                'd80: Mat_w[21] = Mat_r[21] - product_shift_r;  //D[3] = A[3,3] - u[0,3]*L[3,0] - u[1,3]*L[3,1] (- u[2,3]*L[3,2])
-                'd83: Mat_w[22] = Mat_r[22] - product_shift_r;  //u[3,4] = A[3,4] (- u[0,4]*L[3,0]) - u[1,4]*L[3,1] - u[2,4]*L[3,2]
-                'd86: Mat_w[22] = Mat_r[22] - product_shift_r;  //u[3,4] = A[3,4] - u[0,4]*L[3,0] (- u[1,4]*L[3,1]) - u[2,4]*L[3,2]
-                'd89: Mat_w[22] = Mat_r[22] - product_shift_r;  //u[3,4] = A[3,4] - u[0,4]*L[3,0] - u[1,4]*L[3,1] (- u[2,4]*L[3,2])
-                'd92: Mat_w[27] = quotient;  	                //L[4,3] = u[3,4]/D[3]
-                'd95: Mat_w[23] = Mat_r[23] - product_shift_r;  //u[3,5] = A[3,5] (- u[0,5]*L[3,0]) - u[1,5]*L[3,1] - u[2,5]*L[3,2]
-                'd98: Mat_w[23] = Mat_r[23] - product_shift_r;  //u[3,5] = A[3,5] - u[0,5]*L[3,0] (- u[1,5]*L[3,1]) - u[2,5]*L[3,2]
-                'd101: Mat_w[23] = Mat_r[23] - product_shift_r; //u[3,5] = A[3,5] - u[0,5]*L[3,0] - u[1,5]*L[3,1] (- u[2,5]*L[3,2])
-                'd104: Mat_w[33] = quotient; 	                //L[5,3] = u[3,5]/D[3]
-                'd107: Mat_w[28] = Mat_r[28] - product_shift_r; //D[4] = A[4,4] (- u[0,4]*L[4,0]) - u[1,4]*L[4,1] - u[2,4]*L[4,2] - u[3,4]*L[4,3]
-                'd110: Mat_w[28] = Mat_r[28] - product_shift_r; //D[4] = A[4,4] - u[0,4]*L[4,0] (- u[1,4]*L[4,1]) - u[2,4]*L[4,2] - u[3,4]*L[4,3]
-                'd113: Mat_w[28] = Mat_r[28] - product_shift_r; //D[4] = A[4,4] - u[0,4]*L[4,0] - u[1,4]*L[4,1] (- u[2,4]*L[4,2]) - u[3,4]*L[4,3]
-                'd116: Mat_w[28] = Mat_r[28] - product_shift_r; //D[4] = A[4,4] - u[0,4]*L[4,0] - u[1,4]*L[4,1] - u[2,4]*L[4,2] (- u[3,4]*L[4,3])
-                'd119: Mat_w[29] = Mat_r[29] - product_shift_r; //u[4,5] = A[4,5] (- u[0,5]*L[4,0]) - u[1,5]*L[4,1] - u[2,5]*L[4,2] - u[3,5]*L[4,3]
-                'd122: Mat_w[29] = Mat_r[29] - product_shift_r; //u[4,5] = A[4,5] - u[0,5]*L[4,0] (- u[1,5]*L[4,1]) - u[2,5]*L[4,2] - u[3,5]*L[4,3]
-                'd125: Mat_w[29] = Mat_r[29] - product_shift_r; //u[4,5] = A[4,5] - u[0,5]*L[4,0] - u[1,5]*L[4,1] (- u[2,5]*L[4,2]) - u[3,5]*L[4,3]
-                'd128: Mat_w[29] = Mat_r[29] - product_shift_r; //u[4,5] = A[4,5] - u[0,5]*L[4,0] - u[1,5]*L[4,1] - u[2,5]*L[4,2] (- u[3,5]*L[4,3])
-                'd131: Mat_w[34] = quotient;                    //L[5,4] = u[4,5]/D[4]
-                'd134: Mat_w[35] = Mat_r[35] - product_shift_r; //D[5] = A[5,5] (- u[0,5]*L[5,0]) - u[1,5]*L[5,1] - u[2,5]*L[5,2] - u[3,5]*L[5,3] - u[4,5]*L[5,4]
-                'd137: Mat_w[35] = Mat_r[35] - product_shift_r; //D[5] = A[5,5] - u[0,5]*L[5,0] (- u[1,5]*L[5,1]) - u[2,5]*L[5,2] - u[3,5]*L[5,3] - u[4,5]*L[5,4]
-                'd140: Mat_w[35] = Mat_r[35] - product_shift_r; //D[5] = A[5,5] - u[0,5]*L[5,0] - u[1,5]*L[5,1] (- u[2,5]*L[5,2]) - u[3,5]*L[5,3] - u[4,5]*L[5,4]
-                'd143: Mat_w[35] = Mat_r[35] - product_shift_r; //D[5] = A[5,5] - u[0,5]*L[5,0] - u[1,5]*L[5,1] - u[2,5]*L[5,2] (- u[3,5]*L[5,3]) - u[4,5]*L[5,4]
-                'd146: Mat_w[35] = Mat_r[35] - product_shift_r; //D[5] = A[5,5] - u[0,5]*L[5,0] - u[1,5]*L[5,1] - u[2,5]*L[5,2] - u[3,5]*L[5,3] (- u[4,5]*L[5,4])
+                'd90  : Mat_w[6]  = quotient;                     //L[1,0] = u[0,1]/D[0]
+                'd93  : Mat_w[7]  = Mat_r[7]  - product_shift_r;  //D[1] = A[1,1] (- u[0,1]*L[1,0])
+                'd94  : Mat_w[8]  = Mat_r[8]  - product_shift_r;  //u[1,2] = A[1,2] (- u[0,2]*L[1,0])
+                'd95  : Mat_w[9]  = Mat_r[9]  - product_shift_r;  //u[1,3] = A[1,3] (- u[0,3]*L[1,0])
+                'd96  : Mat_w[10] = Mat_r[10] - product_shift_r;  //u[1,4] = A[1,4] (- u[0,4]*L[1,0])
+                'd97  : Mat_w[11] = Mat_r[11] - product_shift_r;  //u[1,5] = A[1,5] (- u[0,5]*L[1,0])
+                'd180 : Mat_w[12] = quotient;                     //L[2,0] = u[0,2]/D[0]
+                'd183 : Mat_w[14] = Mat_r[14] - product_shift_r;  //D[2] = A[2,2] (- u[0,2]*L[2,0]) - u[1,2]*L[2,1]
+                'd184 : Mat_w[15] = Mat_r[15] - product_shift_r;  //u[2,3] = A[2,3] (- u[0,3]*L[2,0]) - u[1,3]*L[2,1]
+                'd185 : Mat_w[16] = Mat_r[16] - product_shift_r;  //u[2,4] = A[2,4] (- u[0,4]*L[2,0]) - u[1,4]*L[2,1]
+                'd186 : Mat_w[17] = Mat_r[17] - product_shift_r;  //u[2,5] = A[2,5] (- u[0,5]*L[2,0]) - u[1,5]*L[2,1]
+                'd270 : Mat_w[18] = quotient;                     //L[3,0] = u[0,3]/D[0]
+                'd273 : Mat_w[21] = Mat_r[21] - product_shift_r;  //D[3] = A[3,3] (- u[0,3]*L[3,0]) - u[1,3]*L[3,1] - u[2,3]*L[3,2]
+                'd274 : Mat_w[22] = Mat_r[22] - product_shift_r;  //u[3,4] = A[3,4] (- u[0,4]*L[3,0]) - u[1,4]*L[3,1] - u[2,4]*L[3,2]
+                'd275 : Mat_w[23] = Mat_r[23] - product_shift_r;  //u[3,5] = A[3,5] (- u[0,5]*L[3,0]) - u[1,5]*L[3,1] - u[2,5]*L[3,2]
+                'd360 : Mat_w[24] = quotient;                     //L[4,0] = u[0,4]/D[0]
+                'd363 : Mat_w[28] = Mat_r[28] - product_shift_r;  //D[4] = A[4,4] (- u[0,4]*L[4,0]) - u[1,4]*L[4,1] - u[2,4]*L[4,2] - u[3,4]*L[4,3]
+                'd364 : Mat_w[29] = Mat_r[29] - product_shift_r;  //u[4,5] = A[4,5] (- u[0,5]*L[4,0]) - u[1,5]*L[4,1] - u[2,5]*L[4,2] - u[3,5]*L[4,3]
+                'd450 : Mat_w[30] = quotient;                     //L[5,0] = u[0,5]/D[0]
+                'd453 : Mat_w[35] = Mat_r[35] - product_shift_r;  //D[5] = A[5,5] (- u[0,5]*L[5,0]) - u[1,5]*L[5,1] - u[2,5]*L[5,2] - u[3,5]*L[5,3] - u[4,5]*L[5,4]
+                'd540 : Mat_w[13] = quotient;                     //L[2,1] = u[1,2]/D[1]
+                'd543 : Mat_w[14] = Mat_r[14] - product_shift_r;  //D[2] = A[2,2] - u[0,2]*L[2,0] (- u[1,2]*L[2,1])
+                'd544 : Mat_w[15] = Mat_r[15] - product_shift_r;  //u[2,3] = A[2,3] - u[0,3]*L[2,0] (- u[1,3]*L[2,1])
+                'd545 : Mat_w[16] = Mat_r[16] - product_shift_r;  //u[2,4] = A[2,4] - u[0,4]*L[2,0] (- u[1,4]*L[2,1])
+                'd546 : Mat_w[17] = Mat_r[17] - product_shift_r;  //u[2,5] = A[2,5] - u[0,5]*L[2,0] (- u[1,5]*L[2,1])
+                'd630 : Mat_w[19] = quotient;                     //L[3,1] = u[1,3]/D[1]
+                'd633 : Mat_w[21] = Mat_r[21] - product_shift_r;  //D[3] = A[3,3] - u[0,3]*L[3,0] (- u[1,3]*L[3,1]) - u[2,3]*L[3,2]
+                'd634 : Mat_w[22] = Mat_r[22] - product_shift_r;  //u[3,4] = A[3,4] - u[0,4]*L[3,0] (- u[1,4]*L[3,1]) - u[2,4]*L[3,2]
+                'd635 : Mat_w[23] = Mat_r[23] - product_shift_r;  //u[3,5] = A[3,5] - u[0,5]*L[3,0] (- u[1,5]*L[3,1]) - u[2,5]*L[3,2]
+                'd720 : Mat_w[25] = quotient;                     //L[4,1] = u[1,4]/D[1]
+                'd723 : Mat_w[28] = Mat_r[28] - product_shift_r;  //D[4] = A[4,4] - u[0,4]*L[4,0] (- u[1,4]*L[4,1]) - u[2,4]*L[4,2] - u[3,4]*L[4,3]
+                'd724 : Mat_w[29] = Mat_r[29] - product_shift_r;  //u[4,5] = A[4,5] - u[0,5]*L[4,0] (- u[1,5]*L[4,1]) - u[2,5]*L[4,2] - u[3,5]*L[4,3]
+                'd810 : Mat_w[31] = quotient;                     //L[5,1] = u[1,5]/D[1]
+                'd813 : Mat_w[35] = Mat_r[35] - product_shift_r;  //D[5] = A[5,5] - u[0,5]*L[5,0] (- u[1,5]*L[5,1]) - u[2,5]*L[5,2] - u[3,5]*L[5,3] - u[4,5]*L[5,4]
+                'd900 : Mat_w[20] = quotient;                     //L[3,2] = u[2,3]/D[2]
+                'd903 : Mat_w[21] = Mat_r[21] - product_shift_r;  //D[3] = A[3,3] - u[0,3]*L[3,0] - u[1,3]*L[3,1] (- u[2,3]*L[3,2])
+                'd904 : Mat_w[22] = Mat_r[22] - product_shift_r;  //u[3,4] = A[3,4] - u[0,4]*L[3,0] - u[1,4]*L[3,1] (- u[2,4]*L[3,2])
+                'd905 : Mat_w[23] = Mat_r[23] - product_shift_r;  //u[3,5] = A[3,5] - u[0,5]*L[3,0] - u[1,5]*L[3,1] (- u[2,5]*L[3,2])
+                'd990 : Mat_w[26] = quotient;                     //L[4,2] = u[2,4]/D[2]
+                'd993 : Mat_w[28] = Mat_r[28] - product_shift_r;  //D[4] = A[4,4] - u[0,4]*L[4,0] - u[1,4]*L[4,1] (- u[2,4]*L[4,2]) - u[3,4]*L[4,3]
+                'd994 : Mat_w[29] = Mat_r[29] - product_shift_r;  //u[4,5] = A[4,5] - u[0,5]*L[4,0] - u[1,5]*L[4,1] (- u[2,5]*L[4,2]) - u[3,5]*L[4,3]
+                'd1080: Mat_w[32] = quotient; 	                  //L[5,2] = u[2,5]/D[2]
+                'd1083: Mat_w[35] = Mat_r[35] - product_shift_r;  //D[5] = A[5,5] - u[0,5]*L[5,0] - u[1,5]*L[5,1] (- u[2,5]*L[5,2]) - u[3,5]*L[5,3] - u[4,5]*L[5,4]
+                'd1170: Mat_w[27] = quotient;  	                  //L[4,3] = u[3,4]/D[3]
+                'd1173: Mat_w[28] = Mat_r[28] - product_shift_r;  //D[4] = A[4,4] - u[0,4]*L[4,0] - u[1,4]*L[4,1] - u[2,4]*L[4,2] (- u[3,4]*L[4,3])
+                'd1174: Mat_w[29] = Mat_r[29] - product_shift_r;  //u[4,5] = A[4,5] - u[0,5]*L[4,0] - u[1,5]*L[4,1] - u[2,5]*L[4,2] (- u[3,5]*L[4,3])
+                'd1260: Mat_w[33] = quotient; 	                  //L[5,3] = u[3,5]/D[3]
+                'd1263: Mat_w[35] = Mat_r[35] - product_shift_r;  //D[5] = A[5,5] - u[0,5]*L[5,0] - u[1,5]*L[5,1] - u[2,5]*L[5,2] (- u[3,5]*L[5,3]) - u[4,5]*L[5,4]
+                'd1350: Mat_w[34] = quotient;                     //L[5,4] = u[4,5]/D[4]
+                'd1353: Mat_w[35] = Mat_r[35] - product_shift_r;  //D[5] = A[5,5] - u[0,5]*L[5,0] - u[1,5]*L[5,1] - u[2,5]*L[5,2] - u[3,5]*L[5,3] (- u[4,5]*L[5,4])
                 default: begin for (j = 0; j < 36 ; j = j + 1) Mat_w[j] = Mat_r[j]; end
             endcase			
         end
@@ -339,29 +320,29 @@ module LDLT
     //===================
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) state_r <= IDLE;
-        else  state_r <= state_w;
+        else          state_r <= state_w;
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) cnt_r <= '0;
-        else  cnt_r <= cnt_w;
+        else          cnt_r <= cnt_w;
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) done_r <= '0;
-        else  done_r <= (cnt_r == 'd147);
+        else          done_r <= (cnt_r == 'd1354);
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) product_shift_r <= '0;
-        else  product_shift_r <= (product[MATRIX_BW+MATRIX_BW-1])? product_add[MATRIX_BW+MATRIX_BW:MUL] : product[MATRIX_BW+MATRIX_BW-1:MUL];
+        else          product_shift_r <= (product[MATRIX_BW+MATRIX_BW-1])? product_add[MATRIX_BW+MATRIX_BW:MUL] : product[MATRIX_BW+MATRIX_BW-1:MUL];
     end
 
     generate
     for (i = 0; i < 36 ; i = i + 1) begin
         always_ff @(posedge i_clk or negedge i_rst_n) begin
-            if (!i_rst_n)      Mat_r[i] <= '0;
-            else  Mat_r[i] <= Mat_w[i];
+            if (!i_rst_n) Mat_r[i] <= '0;
+            else          Mat_r[i] <= Mat_w[i];
         end
     end
     endgenerate

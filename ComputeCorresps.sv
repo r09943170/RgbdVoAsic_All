@@ -78,24 +78,33 @@ module ComputeCorresps
     // Signal Declaration
     //=================================
     //dstFrame input
+        //dst_d0 = d0
     logic                     u1_clr;   //u1 reset or not
     logic                     v1_clr;   //v1 stop or not
     logic                     dst_en;   //u1, v1 enable
     logic [H_SIZE_BW-1:0]     u1_w;
-    logic [H_SIZE_BW-1:0]     u1_r, u1_r_d1;     //u1
     logic [V_SIZE_BW-1:0]     v1_w;
-    logic [V_SIZE_BW-1:0]     v1_r;     //v1
+    logic [H_SIZE_BW-1:0]     u1_r;
+    logic [V_SIZE_BW-1:0]     v1_r;
+    
+        //dst_d1 = d1
+    logic [H_SIZE_BW-1:0]     u1_r_d1;
     logic [DATA_DEPTH_BW-1:0] i_d1_r;
     logic [DATA_RGB_BW-1:0]   i_R1_r;
 
     //dstFrame_lb_store
-    logic                                   valid_1_r;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   o_dstFrame_lb_sram_DA_w;
-    logic [LB_STORE_INDEX_BW-1:0]           dstFrame_lb_store_index_r, dstFrame_lb_store_index_w;
+        //dst_d0 = d0
+    logic [LB_STORE_INDEX_BW-1:0]           dstFrame_lb_store_index_w;
     logic                                   dstFrame_lb_store_index_clr;
     logic                                   dstFrame_lb_store_index_add;
+
+        //dst_d1 = d1
+    logic                                   valid_1_r;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   o_dstFrame_lb_sram_DA_w;
+    logic [LB_STORE_INDEX_BW-1:0]           dstFrame_lb_store_index_r;
     logic [H_SIZE_BW-2:0]                   dstFrame_lb_store_addr;
 
+        //dst_d2 = d2
     logic                                   o_dstFrame_lb_sram_even_WENA_r[0:62];
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   o_dstFrame_lb_sram_even_DA_r[0:62];
     logic [H_SIZE_BW-2:0]                   o_dstFrame_lb_sram_even_AA_r[0:62];
@@ -105,36 +114,72 @@ module ComputeCorresps
     logic [H_SIZE_BW-2:0]                   o_dstFrame_lb_sram_odd_AA_r[0:62];
 
     //srcFrame input
+        //src_d0 = dst_d0 + d640*31 = dst_d0 + d19840 = d19840
     logic                     u0_clr;   //u0 +1 or not
     logic                     v0_clr;   //v0 +1 or not
     logic                     src_en;
     logic [H_SIZE_BW-1:0]     u0_w;
-    logic [H_SIZE_BW-1:0]     u0_r, u0_r_d1;     //u0
     logic [V_SIZE_BW-1:0]     v0_w;
-    logic [V_SIZE_BW-1:0]     v0_r, v0_r_d1;     //v0
+    logic [H_SIZE_BW-1:0]     u0_r;
+    logic [V_SIZE_BW-1:0]     v0_r;
+
+        //src_d1 = d19841; use start at s1_d1 = src_d0 + d640 + d1 = d20481
+    logic [H_SIZE_BW-1:0]     u0_r_d1;     //u0
+    logic [V_SIZE_BW-1:0]     v0_r_d1;     //v0
     logic [DATA_DEPTH_BW-1:0] i_d0_r;
 
     //normal_compute_0
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r_src_d3;  //for project
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r_d13; //depth_u
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r_d14; //depth_0
-    logic                                 o_srcFrame_lb_sram_WENA_r, o_srcFrame_lb_sram_WENA_w;
-    logic                                 o_srcFrame_lb_sram_WENB_r, o_srcFrame_lb_sram_WENB_w;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DA_r,   o_srcFrame_lb_sram_DA_w;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DB_r,   o_srcFrame_lb_sram_DB_w;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_AA_r,   o_srcFrame_lb_sram_AA_w;
-    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_AB_r,   o_srcFrame_lb_sram_AB_w;
+        //src_d0 = d19840
+    logic                                 o_srcFrame_lb_sram_WENA_w;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DA_w;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_AA_w;
 
-    logic                     valid_load_0_w, valid_load_0_r, valid_load_0_r_d16;
-    logic                     valid_normal_0_start;
+        //src_d1 = d19841
+    logic                                 o_srcFrame_lb_sram_WENA_r;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DA_r;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_AA_r;
+
+        //s1_d-19 = d20461
+    logic                                 o_srcFrame_lb_sram_WENB_w;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DB_w;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_AB_w;
+
+        //s1_d-18 = d20462
+    logic                                 o_srcFrame_lb_sram_WENB_r;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_DB_r;
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] o_srcFrame_lb_sram_AB_r;
+
+        //s1_d-16 = src_d0 + d640 - d16 = d20464
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r;
+
+
+
+
+        //s1_d0 (use at s1_d1: depth_0_u)
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r_d16; //depth_u
+
+        //s1_d1
+    logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0] i_srcFrame_lb_sram_QB_r_d17; //depth_0
+    
+        //s1_d-19
+    logic                     valid_load_0_w;
+    
+        //s1_d-18
+    logic                     valid_load_0_r;
+
+        //s1_d1
+    logic                     valid_load_0_r_d19;
     logic [DATA_RGB_BW-1:0]   RGB_0;
+
+        //s1_d1 (u_normalComputer_src input)
+    logic                     valid_normal_0_start;
     logic [DATA_DEPTH_BW-1:0] depth_0;
     logic [DATA_DEPTH_BW-1:0] depth_0_u;
     logic [DATA_DEPTH_BW-1:0] depth_0_v;
     logic [H_SIZE_BW-1:0]     normal_0_u_i;
     logic [V_SIZE_BW-1:0]     normal_0_v_i;
 
+        //s1_d8 (u_normalComputer_src output)
     logic                     valid_normalUnit_0;
     logic                     maskdepth_0;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_0_x;
@@ -142,41 +187,48 @@ module ComputeCorresps
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_0_z;
 
     //projection
+        //s1_d-16 (u_idx2cloud input)
     logic                     valid_proj_start;
     logic [H_SIZE_BW-1:0]     proj_u_i;
     logic [V_SIZE_BW-1:0]     proj_v_i;
     logic [DATA_DEPTH_BW-1:0] proj_d_i;
 
+        //s1_d-10 (u_idx2cloud output; u_transmat input)
     logic                     valid_p0;
     logic [CLOUD_BW-1:0]      p0_x;
     logic [CLOUD_BW-1:0]      p0_y;
     logic [CLOUD_BW-1:0]      p0_z;
 
+        //s1_d-7 (u_transmat output; u_proj input)
     logic                     vaild_tp0;
     logic [CLOUD_BW-1:0]      tp0_x;
     logic [CLOUD_BW-1:0]      tp0_y;
     logic [CLOUD_BW-1:0]      tp0_z;
 
+        //s1_d1 (u_proj output)
     logic                     valid_proj;
     logic [H_SIZE_BW-1:0]     proj_u1;
     logic [V_SIZE_BW-1:0]     proj_v1;
 
     //dstFrame_lb_load
+    logic [LB_LOAD_INDEX_BW-1:0] value_default; // constant 8'd127
+
+        //use start at s1_d1
     logic [LB_LOAD_INDEX_BW-1:0] dstFrame_lb_load_v_origin;
     logic [LB_LOAD_INDEX_BW-1:0] dstFrame_lb_load_index_tmp;
     logic [LB_LOAD_INDEX_BW-1:0] index_OutOfUpperBound, index_OutOfLowerBound;
-    logic [LB_LOAD_INDEX_BW-1:0] dstFrame_lb_load_index_w, dstFrame_lb_load_index_r, dstFrame_lb_load_index_r_d2;
-    logic [LB_LOAD_INDEX_BW-1:0] value_default; // 8'd127
+    logic [LB_LOAD_INDEX_BW-1:0] dstFrame_lb_load_index_w;
 
+        //s1_d2
     logic                       valid_normal_0_start_d1;
-    logic                       valid_normal_0_start_d3;
-    
-    logic [H_SIZE_BW-1:0]       proj_u1_r, proj_u1_d3;
-    logic [V_SIZE_BW-1:0]       proj_v1_d3;
 
-    logic [H_SIZE_BW-2:0]       dstFrame_lb_load_addr;
-    logic [H_SIZE_BW-2:0]       idle_Addr;
+    logic [LB_LOAD_INDEX_BW-1:0] dstFrame_lb_load_index_r;
+    logic [H_SIZE_BW-2:0]        dstFrame_lb_load_addr;
+    logic [H_SIZE_BW-2:0]        idle_Addr;
 
+    logic [H_SIZE_BW-1:0]        proj_u1_r;
+
+        //s1_d3
     logic                                   o_dstFrame_lb_sram_even_WENB_r[0:62];
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   o_dstFrame_lb_sram_even_DB_r[0:62];
     logic [H_SIZE_BW-2:0]                   o_dstFrame_lb_sram_even_AB_r[0:62];
@@ -185,74 +237,88 @@ module ComputeCorresps
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   o_dstFrame_lb_sram_odd_DB_r[0:62];
     logic [H_SIZE_BW-2:0]                   o_dstFrame_lb_sram_odd_AB_r[0:62];
 
+        //s1_d4
+    logic [LB_LOAD_INDEX_BW-1:0] dstFrame_lb_load_index_r_d2;
+    logic                        valid_normal_0_start_d3;
+    
+    logic [H_SIZE_BW-1:0]        proj_u1_d3;
+    logic [V_SIZE_BW-1:0]        proj_v1_d3;
+
+        //s1_d5
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   i_dstFrame_lb_sram_QB_r;
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   i_dstFrame_lb_sram_QB_u_r;
     logic [DATA_RGB_BW+DATA_DEPTH_BW-1:0]   i_dstFrame_lb_sram_QB_v_r;
 
     //proj_gradient_normal_compute
-        //d4
+        //s1_d5 (u_gradient, u_normalComputer_proj input)
+    logic                       valid_proj_d4;
+    logic [H_SIZE_BW-1:0]       proj_u1_d4;
+    logic [V_SIZE_BW-1:0]       proj_v1_d4;
+        //s1_d5 (u_gradient)
     logic [DATA_RGB_BW-1:0]     proj_R1_r;
     logic [DATA_RGB_BW-1:0]     proj_R1_u_r;
     logic [DATA_RGB_BW-1:0]     proj_R1_v_r;
-    
-    logic                       valid_proj_d4;
+        //s1_d5 (u_normalComputer_proj input)
     logic [DATA_DEPTH_BW-1:0]   proj_d1_r;
     logic [DATA_DEPTH_BW-1:0]   proj_d1_u_r;
     logic [DATA_DEPTH_BW-1:0]   proj_d1_v_r;
-    logic [H_SIZE_BW-1:0]       proj_u1_d4;
-    logic [V_SIZE_BW-1:0]       proj_v1_d4;
-        //d7
+    
+        //s1_d8 (u_gradient output)
     logic                       valid_gradient;
     logic [DATA_RGB_BW:0]       dI_dx;
     logic [DATA_RGB_BW:0]       dI_dy;
-        //d9
-    logic                       valid_proj_normalUnit_1;
+
+        //s1_d12 (u_normalComputer_proj output)
     logic                       maskdepth_proj_1;
+        //s1_d12 (u_normalComputer_proj output; u_normalUnitization_proj input)
+    logic                       valid_proj_normalUnit_1;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_proj_1_x;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_proj_1_y;
     logic [CLOUD_BW+CLOUD_BW-MUL-1:0] normal_proj_1_z;
-        //d14
+
+        //s1_d29 (u_normalUnitization_proj output)
     logic                       valid_n_u_proj_1;
     logic [CLOUD_BW-1:0]        n_u_proj_1_x;
     logic [CLOUD_BW-1:0]        n_u_proj_1_y;
     logic [CLOUD_BW-1:0]        n_u_proj_1_z;
 
     //correspondence_check
-        //d1
+        //s1_d2
     logic [V_SIZE_BW-1:0]       proj_v1_r;
     logic [V_SIZE_BW-1:0]       normal_0_v_i_d1;
     logic                       check_near;
 
-        //d4
+        //s1_d5
     logic [CLOUD_BW-1:0]        tp0_z_r;
     logic                       check_depth;
 
-        //d9
+        //s1_d12
     logic                       maskdepth_0_d4;
-    logic                       check_near_d8;
-    logic                       check_depth_d5;
+    logic                       check_near_d10;
+    logic                       check_depth_d7;
     logic                       check_corresps;
 
-    //result_output //d14
-    logic                       check_corresps_d5;
-    logic [H_SIZE_BW-1:0]       normal_0_u_i_d14;
-    logic [V_SIZE_BW-1:0]       normal_0_v_i_d14;
-    logic [DATA_DEPTH_BW-1:0]   depth_0_d14;
-    logic [H_SIZE_BW-1:0]       proj_u1_d14;
-    logic [V_SIZE_BW-1:0]       proj_v1_d14;
-    logic [DATA_DEPTH_BW-1:0]   proj_d1_r_d10;
-    logic [DATA_RGB_BW:0]       dI_dx_d7;
-    logic [DATA_RGB_BW:0]       dI_dy_d7;
-    logic [DATA_RGB_BW-1:0]     RGB_0_d14;
-    logic [DATA_RGB_BW-1:0]     proj_R1_r_d10;
+    //result_output s1_d29
+    logic                       check_corresps_d17;
+    logic [H_SIZE_BW-1:0]       normal_0_u_i_d28;
+    logic [V_SIZE_BW-1:0]       normal_0_v_i_d28;
+    logic [DATA_DEPTH_BW-1:0]   depth_0_d28;
+    logic [H_SIZE_BW-1:0]       proj_u1_d28;
+    logic [V_SIZE_BW-1:0]       proj_v1_d28;
+    logic [DATA_DEPTH_BW-1:0]   proj_d1_r_d24;
+    logic [DATA_RGB_BW:0]       dI_dx_d21;
+    logic [DATA_RGB_BW:0]       dI_dy_d21;
+    logic [DATA_RGB_BW-1:0]     RGB_0_d28;
+    logic [DATA_RGB_BW-1:0]     proj_R1_r_d24;
 
-    //d15
+    //s1_d30
     logic                       valid_n_u_proj_1_d1;
 
     //=================================
     // Combinational Logic
     //=================================
     //dstFrame input
+        //dst_d0 = d0
     assign u1_clr = (u1_r == r_hsize-1);
     assign v1_clr = (v1_r == r_vsize + MAX_DIFF_LINE + 2);
     assign dst_en = (i_valid_1 || ((v1_r > 0) && (!v1_clr)));   //480 + 32 lines
@@ -260,27 +326,31 @@ module ComputeCorresps
     assign v1_w = (dst_en && u1_clr) ? (v1_clr ? v1_r : v1_r + 1) : v1_r;
 
     //dstFrame_lb_store
+        //dst_d0 = d0
     assign dstFrame_lb_store_index_clr = (dstFrame_lb_store_index_r == MAX_DIFF_LINE + MAX_DIFF_LINE + 2);  
     assign dstFrame_lb_store_index_add = (u1_r_d1 == r_hsize-1); 
     assign dstFrame_lb_store_index_w = dst_en ? 
                                        (dstFrame_lb_store_index_add ? 
-                                       (dstFrame_lb_store_index_clr ? 0 : dstFrame_lb_store_index_r + 1) : dstFrame_lb_store_index_r) : 0 ; //d0
-    assign dstFrame_lb_store_addr  = u1_r_d1[H_SIZE_BW-1:1];   //d1
-    assign o_dstFrame_lb_sram_DA_w = {i_R1_r, i_d1_r};    //d1
+                                       (dstFrame_lb_store_index_clr ? 0 : dstFrame_lb_store_index_r + 1) : dstFrame_lb_store_index_r) : 0 ; //dst_d0
+        //dst_d1 = d1
+    assign dstFrame_lb_store_addr  = u1_r_d1[H_SIZE_BW-1:1];   //dst_d1
+    assign o_dstFrame_lb_sram_DA_w = {i_R1_r, i_d1_r};    //dst_d1
 
     always_comb begin
         for(int i = 0; i <= 62; i = i + 1)begin
+                //dst_d2 = d2
             o_dstFrame_lb_sram_even_WENA[i] = o_dstFrame_lb_sram_even_WENA_r[i];
-            o_dstFrame_lb_sram_even_WENB[i] = o_dstFrame_lb_sram_even_WENB_r[i];
             o_dstFrame_lb_sram_even_DA[i]   = o_dstFrame_lb_sram_even_DA_r[i];
-            o_dstFrame_lb_sram_even_DB[i]   = o_dstFrame_lb_sram_even_DB_r[i];
             o_dstFrame_lb_sram_even_AA[i]   = o_dstFrame_lb_sram_even_AA_r[i];
-            o_dstFrame_lb_sram_even_AB[i]   = o_dstFrame_lb_sram_even_AB_r[i];
             o_dstFrame_lb_sram_odd_WENA[i]  = o_dstFrame_lb_sram_odd_WENA_r[i];
-            o_dstFrame_lb_sram_odd_WENB[i]  = o_dstFrame_lb_sram_odd_WENB_r[i];
             o_dstFrame_lb_sram_odd_DA[i]    = o_dstFrame_lb_sram_odd_DA_r[i];
-            o_dstFrame_lb_sram_odd_DB[i]    = o_dstFrame_lb_sram_odd_DB_r[i];
             o_dstFrame_lb_sram_odd_AA[i]    = o_dstFrame_lb_sram_odd_AA_r[i];
+                //s1_d3
+            o_dstFrame_lb_sram_even_WENB[i] = o_dstFrame_lb_sram_even_WENB_r[i];
+            o_dstFrame_lb_sram_even_DB[i]   = o_dstFrame_lb_sram_even_DB_r[i];
+            o_dstFrame_lb_sram_even_AB[i]   = o_dstFrame_lb_sram_even_AB_r[i];
+            o_dstFrame_lb_sram_odd_WENB[i]  = o_dstFrame_lb_sram_odd_WENB_r[i];
+            o_dstFrame_lb_sram_odd_DB[i]    = o_dstFrame_lb_sram_odd_DB_r[i];
             o_dstFrame_lb_sram_odd_AB[i]    = o_dstFrame_lb_sram_odd_AB_r[i];
         end
     end
@@ -293,12 +363,13 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(u1_r)
+        ,.i_data(u1_r)  //dst_d0 = d0
         // Output
-        ,.o_data(u1_r_d1)
+        ,.o_data(u1_r_d1)   //dst_d1 = d1
     );
 
     //srcFrame input
+        //src_d0 = dst_d0 + d640*31 = dst_d0 + d19840 = d19840
     assign u0_clr = (u0_r == r_hsize-1);
     assign v0_clr = (v0_r == r_vsize + 2);
     assign src_en = (i_valid_0 || ((v0_r > 0) && (!v0_clr)));   //480 + 32 lines
@@ -306,32 +377,37 @@ module ComputeCorresps
     assign v0_w = (src_en && u0_clr) ? (v0_clr ? v0_r : v0_r + 1) : v0_r;
 
     //normal_compute_0
-    assign valid_load_0_w = ((u0_r >= r_hsize-16) || (v0_r > 0)) ? ((((v0_r == r_vsize) && (u0_r >= r_hsize-16)) || (v0_r > r_vsize)) ? 0 : 1) : 0;
+        //s1_d-19 = src_d0 + d640 - d19 = d20461
+    assign valid_load_0_w = ((u0_r >= r_hsize-19) || (v0_r > 0)) ? ((((v0_r == r_vsize) && (u0_r >= r_hsize-19)) || (v0_r > r_vsize)) ? 0 : 1) : 0;
 
-        //d0
-    assign valid_normal_0_start = valid_load_0_r_d16;
-    assign RGB_0      = i_srcFrame_lb_sram_QB_r_d14[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];
-    assign depth_0    = i_srcFrame_lb_sram_QB_r_d14[DATA_DEPTH_BW-1:0];
-    assign depth_0_u  = i_srcFrame_lb_sram_QB_r_d13[DATA_DEPTH_BW-1:0];
+        //s1_d1 = src_d0 + d640 + d1 = d20481
+    assign valid_normal_0_start = valid_load_0_r_d19;
+    assign RGB_0      = i_srcFrame_lb_sram_QB_r_d17[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];
+    assign depth_0    = i_srcFrame_lb_sram_QB_r_d17[DATA_DEPTH_BW-1:0];
+    assign depth_0_u  = i_srcFrame_lb_sram_QB_r_d16[DATA_DEPTH_BW-1:0];
     assign depth_0_v  = i_d0_r;
     assign normal_0_u_i = (valid_normal_0_start && (v0_r_d1 > 0)) ? u0_r_d1 : r_hsize-1;
     assign normal_0_v_i = (valid_normal_0_start && (v0_r_d1 > 0)) ? (v0_r_d1 - 1) : r_vsize-1;
 
+        //src_d0 = d19840
     assign o_srcFrame_lb_sram_WENA_w = i_valid_0 ? 0 : 1;
     assign o_srcFrame_lb_sram_DA_w   = i_valid_0 ? {i_data0, i_depth0} : 0;
     assign o_srcFrame_lb_sram_AA_w   = u0_r;
+        //s1_d-19 = d20461
     assign o_srcFrame_lb_sram_WENB_w = 1;
     assign o_srcFrame_lb_sram_DB_w   = {{DATA_RGB_BW{1'd0}}, {DATA_DEPTH_BW{1'd0}}};
-    assign o_srcFrame_lb_sram_AB_w   = (valid_load_0_w && (u0_r > r_hsize-17)) ? (u0_r - (r_hsize-16)) : (u0_r + 16);
-
+    assign o_srcFrame_lb_sram_AB_w   = (valid_load_0_w && (u0_r > r_hsize-20)) ? (u0_r - (r_hsize-19)) : (u0_r + 19);
+        
+        //src_d1 = d19841
     assign o_srcFrame_lb_sram_WENA = o_srcFrame_lb_sram_WENA_r;
     assign o_srcFrame_lb_sram_DA   = o_srcFrame_lb_sram_DA_r;
     assign o_srcFrame_lb_sram_AA   = o_srcFrame_lb_sram_AA_r;
+        //s1_d-18 = d20462
     assign o_srcFrame_lb_sram_WENB = o_srcFrame_lb_sram_WENB_r;
     assign o_srcFrame_lb_sram_DB   = o_srcFrame_lb_sram_DB_r;
     assign o_srcFrame_lb_sram_AB   = o_srcFrame_lb_sram_AB_r;
 
-    //5T
+    //7T    //s1_d1
     normalComputer u_normalComputer_src (
         // input
          .i_clk         ( i_clk )
@@ -349,62 +425,62 @@ module ComputeCorresps
         ,.r_cy          ( r_cy )
         // output  
         ,.o_valid       ( valid_normalUnit_0 )
-        ,.o_maskdepth   ( maskdepth_0 ) //d5
-        ,.o_normal_x    ( normal_0_x )  //d5
-        ,.o_normal_y    ( normal_0_y )  //d5
-        ,.o_normal_z    ( normal_0_z )  //d5
+        ,.o_maskdepth   ( maskdepth_0 ) //s1_d8
+        ,.o_normal_x    ( normal_0_x )  //s1_d8
+        ,.o_normal_y    ( normal_0_y )  //s1_d8
+        ,.o_normal_z    ( normal_0_z )  //s1_d8
     );
 
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(16)
-    ) u_valid_load_0_r_d16 (
+       ,.STAGE(19)
+    ) u_valid_load_0_r_d19 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_load_0_r)
+        ,.i_data(valid_load_0_r)    //s1_d-18
         // Output
-        ,.o_data(valid_load_0_r_d16)
+        ,.o_data(valid_load_0_r_d19)    //s1_d1
     );
+
+    DataDelay
+    #(
+        .DATA_BW(DATA_RGB_BW+DATA_DEPTH_BW)
+       ,.STAGE(16)
+    ) u_i_srcFrame_lb_sram_QB_r_src_d16 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(i_srcFrame_lb_sram_QB_r)   //s1_d-16
+        // Output
+        ,.o_data(i_srcFrame_lb_sram_QB_r_d16)   //s1_d0 (use at s1_d1: depth_0_u)
+    );
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
     
     DataDelay
     #(
         .DATA_BW(DATA_RGB_BW+DATA_DEPTH_BW)
-       ,.STAGE(3)
-    ) u_i_srcFrame_lb_sram_QB_r_src_d8 (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(i_srcFrame_lb_sram_QB_r)
-        // Output
-        ,.o_data(i_srcFrame_lb_sram_QB_r_src_d3)
-    );
-
-    DataDelay
-    #(
-        .DATA_BW(DATA_RGB_BW+DATA_DEPTH_BW)
-       ,.STAGE(10)
-    ) u_i_srcFrame_lb_sram_QB_r_src_d13 (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(i_srcFrame_lb_sram_QB_r_src_d3)
-        // Output
-        ,.o_data(i_srcFrame_lb_sram_QB_r_d13)
-    );
-
-    DataDelay
-    #(
-        .DATA_BW(DATA_RGB_BW+DATA_DEPTH_BW)
        ,.STAGE(1)
-    ) u_i_srcFrame_lb_sram_QB_r_src_d14 (
+    ) u_i_srcFrame_lb_sram_QB_r_src_d17 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(i_srcFrame_lb_sram_QB_r_d13)
+        ,.i_data(i_srcFrame_lb_sram_QB_r_d16)   //s1_d0
         // Output
-        ,.o_data(i_srcFrame_lb_sram_QB_r_d14)
+        ,.o_data(i_srcFrame_lb_sram_QB_r_d17)   //s1_d1 : depth_0
     );
 
     DataDelay
@@ -417,7 +493,7 @@ module ComputeCorresps
         ,.i_rst_n(i_rst_n)
         ,.i_data(u0_r)
         // Output
-        ,.o_data(u0_r_d1)
+        ,.o_data(u0_r_d1)   //use start at s1_d1
     );
 
     DataDelay
@@ -430,16 +506,17 @@ module ComputeCorresps
         ,.i_rst_n(i_rst_n)
         ,.i_data(v0_r)
         // Output
-        ,.o_data(v0_r_d1)
+        ,.o_data(v0_r_d1)   //use start at s1_d1
     );
 
     //projection
-    assign valid_proj_start = ((u0_r_d1 >= r_hsize-11)||(v0_r_d1 > 0)) ? ((((u0_r_d1 >= r_hsize-11) && (v0_r_d1 == r_vsize)) || (v0_r_d1 > r_vsize)) ? 0 : 1) : 0;
-    assign proj_u_i = (valid_proj_start) ? ((u0_r_d1 >= r_hsize-11) ? (u0_r_d1-(r_hsize-11)) : u0_r_d1 + 11) : r_hsize-1;
-    assign proj_v_i = (valid_proj_start) ? ((u0_r_d1 >= r_hsize-11) ? v0_r_d1 : (v0_r_d1 - 1)) : r_vsize-1;
-    assign proj_d_i = (valid_proj_start) ? i_srcFrame_lb_sram_QB_r_src_d3[DATA_DEPTH_BW-1:0] : 0;
+        //s1_d-16
+    assign valid_proj_start = ((u0_r_d1 >= r_hsize-17)||(v0_r_d1 > 0)) ? ((((u0_r_d1 >= r_hsize-17) && (v0_r_d1 == r_vsize)) || (v0_r_d1 > r_vsize)) ? 0 : 1) : 0;
+    assign proj_u_i = (valid_proj_start) ? ((u0_r_d1 >= r_hsize-17) ? (u0_r_d1-(r_hsize-17)) : u0_r_d1 + 17) : r_hsize-1;
+    assign proj_v_i = (valid_proj_start) ? ((u0_r_d1 >= r_hsize-17) ? v0_r_d1 : (v0_r_d1 - 1)) : r_vsize-1;
+    assign proj_d_i = (valid_proj_start) ? i_srcFrame_lb_sram_QB_r[DATA_DEPTH_BW-1:0] : 0;
 
-    //4T
+    //6T
     //input u0,v0,d0; output p0_x, p0_y, p0_z
     Idx2Cloud u_idx2cloud (
         // input
@@ -455,10 +532,10 @@ module ComputeCorresps
         ,.r_cx     ( r_cx )
         ,.r_cy     ( r_cy )
         // Output
-        ,.o_valid   (valid_p0)
-        ,.o_cloud_x (p0_x)
-        ,.o_cloud_y (p0_y)
-        ,.o_cloud_z (p0_z)
+        ,.o_valid   (valid_p0)  //s1_d-10
+        ,.o_cloud_x (p0_x)  //s1_d-10
+        ,.o_cloud_y (p0_y)  //s1_d-10
+        ,.o_cloud_z (p0_z)  //s1_d-10
     );
 
     //3T
@@ -473,13 +550,13 @@ module ComputeCorresps
         ,.i_cloud_z  ( p0_z )
         ,.i_pose     ( i_pose )    //Rt[12] 3x4
         // Output
-        ,.o_valid    ( vaild_tp0 )
-        ,.o_cloud_x  ( tp0_x )
-        ,.o_cloud_y  ( tp0_y )
-        ,.o_cloud_z  ( tp0_z )
+        ,.o_valid    ( vaild_tp0 )  //s1_d-7
+        ,.o_cloud_x  ( tp0_x )  //s1_d-7
+        ,.o_cloud_y  ( tp0_y )  //s1_d-7
+        ,.o_cloud_z  ( tp0_z )  //s1_d-7
     );
 
-    //4T
+    //8T
     //input tp0_x, tp0_y, tp0_z; output proj_u1, proj_v1
     Proj u_proj (
         // input
@@ -495,13 +572,14 @@ module ComputeCorresps
         ,.r_cx       ( r_cx )
         ,.r_cy       ( r_cy )
         // Output 
-        ,.o_valid    ( valid_proj ) //d0
-        ,.o_idx_x    ( proj_u1 )    //d0
-        ,.o_idx_y    ( proj_v1 )    //d0
+        ,.o_valid    ( valid_proj ) //s1_d1
+        ,.o_idx_x    ( proj_u1 )    //s1_d1
+        ,.o_idx_y    ( proj_v1 )    //s1_d1
     );
 
     //dstFrame_lb_load
     assign value_default = {{1'b0}, {(LB_LOAD_INDEX_BW-1){1'b1}}}; //8'd127
+        //use start at s1_d1
     assign dstFrame_lb_load_v_origin  = (dstFrame_lb_store_index_r >= MAX_DIFF_LINE + 2) ? 
                                         (dstFrame_lb_store_index_r - MAX_DIFF_LINE - 2) : 
                                         (dstFrame_lb_store_index_r + MAX_DIFF_LINE + 1);
@@ -515,7 +593,8 @@ module ComputeCorresps
                                         (($signed(dstFrame_lb_load_index_tmp) < 0)           ? index_OutOfLowerBound : 
                                         (($signed(dstFrame_lb_load_index_tmp) > LB_NUMBER-1) ? index_OutOfUpperBound : dstFrame_lb_load_index_tmp));    //d0
 
-    assign dstFrame_lb_load_addr = proj_u1_r[H_SIZE_BW-1:1];    //d1
+        //use start at s1_d2
+    assign dstFrame_lb_load_addr = proj_u1_r[H_SIZE_BW-1:1];
     assign idle_Addr = (u1_r_d1[H_SIZE_BW-1:1] > (r_hsize[H_SIZE_BW-1:1]-20)) ? 9'd20 : (r_hsize[H_SIZE_BW-1:1]-1); 
 
     DataDelay
@@ -526,9 +605,9 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_normal_0_start)
+        ,.i_data(valid_normal_0_start)  //s1_d1
         // Output
-        ,.o_data(valid_normal_0_start_d1)   //d1
+        ,.o_data(valid_normal_0_start_d1)   //s1_d2
     );
 
     DataDelay
@@ -539,9 +618,9 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_normal_0_start_d1)
+        ,.i_data(valid_normal_0_start_d1)   //s1_d2
         // Output
-        ,.o_data(valid_normal_0_start_d3)   //d3
+        ,.o_data(valid_normal_0_start_d3)   //s1_d4
     );
 
     DataDelay
@@ -552,9 +631,9 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(dstFrame_lb_load_index_r)
+        ,.i_data(dstFrame_lb_load_index_r)  //s1_d2
         // Output
-        ,.o_data(dstFrame_lb_load_index_r_d2)   //d3
+        ,.o_data(dstFrame_lb_load_index_r_d2)   //s1_d4
     );
 
     DataDelay
@@ -565,9 +644,9 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_u1_r)
+        ,.i_data(proj_u1_r) //s1_d2
         // Output
-        ,.o_data(proj_u1_d3)    //d3
+        ,.o_data(proj_u1_d3)    //s1_d4
     );
 
     DataDelay
@@ -578,22 +657,22 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_v1_r)
+        ,.i_data(proj_v1_r) //s1_d2
         // Output
-        ,.o_data(proj_v1_d3)    //d3
+        ,.o_data(proj_v1_d3)    //s1_d4
     );
 
-    //proj_normal_compute   //d4
-    assign proj_R1_r   = i_dstFrame_lb_sram_QB_r[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];     //d4
-    assign proj_R1_u_r = i_dstFrame_lb_sram_QB_u_r[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];   //d4
-    assign proj_R1_v_r = i_dstFrame_lb_sram_QB_v_r[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];   //d4
+    //proj_normal_compute   //s1_d5
+    assign proj_R1_r   = i_dstFrame_lb_sram_QB_r[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];  
+    assign proj_R1_u_r = i_dstFrame_lb_sram_QB_u_r[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];
+    assign proj_R1_v_r = i_dstFrame_lb_sram_QB_v_r[DATA_RGB_BW+DATA_DEPTH_BW-1:DATA_DEPTH_BW];
 
-    assign proj_d1_r   = i_dstFrame_lb_sram_QB_r[DATA_DEPTH_BW-1:0];   //d4
-    assign proj_d1_u_r = i_dstFrame_lb_sram_QB_u_r[DATA_DEPTH_BW-1:0]; //d4
-    assign proj_d1_v_r = i_dstFrame_lb_sram_QB_v_r[DATA_DEPTH_BW-1:0]; //d4
+    assign proj_d1_r   = i_dstFrame_lb_sram_QB_r[DATA_DEPTH_BW-1:0];   //s1_d5
+    assign proj_d1_u_r = i_dstFrame_lb_sram_QB_u_r[DATA_DEPTH_BW-1:0]; //s1_d5
+    assign proj_d1_v_r = i_dstFrame_lb_sram_QB_v_r[DATA_DEPTH_BW-1:0]; //s1_d5
 
     //3T
-    gradient u_gradient (   //d4
+    gradient u_gradient (   //s1_d5
         //input
          .i_clk         ( i_clk )
         ,.i_rst_n       ( i_rst_n )
@@ -607,13 +686,13 @@ module ComputeCorresps
         ,.r_hsize       ( r_hsize )
         ,.r_vsize       ( r_vsize )
         // output
-        ,.o_valid       ( valid_gradient )    //d7
-        ,.o_dI_dx       ( dI_dx )    //d7
-        ,.o_dI_dy       ( dI_dy )    //d7
+        ,.o_valid       ( valid_gradient )    //s1_d8
+        ,.o_dI_dx       ( dI_dx )    //s1_d8
+        ,.o_dI_dy       ( dI_dy )    //s1_d8
     );
 
-    //5T
-    normalComputer u_normalComputer_proj (   //d4
+    //7T
+    normalComputer u_normalComputer_proj (   //s1_d5
         // input
          .i_clk         ( i_clk )
         ,.i_rst_n       ( i_rst_n )
@@ -629,15 +708,15 @@ module ComputeCorresps
         ,.r_cx          ( r_cx )
         ,.r_cy          ( r_cy )
         // output  
-        ,.o_valid       ( valid_proj_normalUnit_1 ) //d9
-        ,.o_maskdepth   ( maskdepth_proj_1 )        //d9
-        ,.o_normal_x    ( normal_proj_1_x )         //d9
-        ,.o_normal_y    ( normal_proj_1_y )         //d9
-        ,.o_normal_z    ( normal_proj_1_z )         //d9
+        ,.o_valid       ( valid_proj_normalUnit_1 ) //s1_d12
+        ,.o_maskdepth   ( maskdepth_proj_1 )        //s1_d12
+        ,.o_normal_x    ( normal_proj_1_x )         //s1_d12
+        ,.o_normal_y    ( normal_proj_1_y )         //s1_d12
+        ,.o_normal_z    ( normal_proj_1_z )         //s1_d12
     );
 
-    //5T
-    normalUnitization u_normalUnitization_proj (    //d9
+    //17T
+    normalUnitization u_normalUnitization_proj (    //s1_d12
         // input
          .i_clk            ( i_clk )
         ,.i_rst_n          ( i_rst_n )
@@ -646,10 +725,10 @@ module ComputeCorresps
         ,.i_normal_y       ( normal_proj_1_y )
         ,.i_normal_z       ( normal_proj_1_z )
         // output 
-        ,.o_valid          ( valid_n_u_proj_1 )   //d14
-        ,.o_unit_normal_x  ( n_u_proj_1_x )       //d14
-        ,.o_unit_normal_y  ( n_u_proj_1_y )       //d14
-        ,.o_unit_normal_z  ( n_u_proj_1_z )       //d14
+        ,.o_valid          ( valid_n_u_proj_1 )   //s1_d29
+        ,.o_unit_normal_x  ( n_u_proj_1_x )       //s1_d29
+        ,.o_unit_normal_y  ( n_u_proj_1_y )       //s1_d29
+        ,.o_unit_normal_z  ( n_u_proj_1_z )       //s1_d29
     );
 
     DataDelay
@@ -660,9 +739,9 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_proj)
+        ,.i_data(valid_proj)    //s1_d1
         // Output
-        ,.o_data(valid_proj_d4)    //d4
+        ,.o_data(valid_proj_d4)    //s1_d5
     );
     
     DataDelay
@@ -673,37 +752,37 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_u1_d3)
+        ,.i_data(proj_u1_d3)    //s1_d4
         // Output
-        ,.o_data(proj_u1_d4)    //d4
+        ,.o_data(proj_u1_d4)    //s1_d5
     );
 
     DataDelay
     #(
         .DATA_BW(V_SIZE_BW)
-       ,.STAGE(3)
+       ,.STAGE(1)
     ) u_proj_v1_d4 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_v1_r)
+        ,.i_data(proj_v1_d3)    //s1_d4
         // Output
-        ,.o_data(proj_v1_d4)    //d4
+        ,.o_data(proj_v1_d4)    //s1_d5
     );
 
     //correspondence_check
-        //d1
+        //s1_d2
     assign check_near = (proj_v1_r < r_vsize) ? ((proj_v1_r >= normal_0_v_i_d1) ? 
                         ((proj_v1_r - normal_0_v_i_d1 <= MAX_DIFF_LINE) ? 1 : 0) : 
                         ((normal_0_v_i_d1 - proj_v1_r <= MAX_DIFF_LINE) ? 1 : 0)) : 0;
     
-        //d4
+        //s1_d5
     assign check_depth = ({proj_d1_r,{MUL{1'b0}}} >= tp0_z_r) ? 
                          (({proj_d1_r,{MUL{1'b0}}} - tp0_z_r <= {MAX_DIFF_DEPTH,{MUL{1'b0}}}) ? 1 : 0) : 
                          ((tp0_z_r - {proj_d1_r,{MUL{1'b0}}} <= {MAX_DIFF_DEPTH,{MUL{1'b0}}}) ? 1 : 0);
         
-        //d9
-    assign check_corresps = check_near_d8 && check_depth_d5 && maskdepth_0_d4 && maskdepth_proj_1;
+        //s1_d12
+    assign check_corresps = check_near_d10 && check_depth_d7 && maskdepth_0_d4 && maskdepth_proj_1;
 
     DataDelay
     #(
@@ -713,48 +792,48 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(normal_0_v_i)  //d0
+        ,.i_data(normal_0_v_i)  //s1_d1
         // Output
-        ,.o_data(normal_0_v_i_d1)    //d1
+        ,.o_data(normal_0_v_i_d1)    //s1_d2
     );
 
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
-       ,.STAGE(8)
+       ,.STAGE(12)
     ) u_tp0_z_r (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(tp0_z)  //d-4
+        ,.i_data(tp0_z)  //s1_d-7
         // Output
-        ,.o_data(tp0_z_r)    //d4
+        ,.o_data(tp0_z_r)    //s1_d5
     );
 
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(5)
-    ) u_check_depth_d5 (
+       ,.STAGE(7)
+    ) u_check_depth_d7 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(check_depth)   //d4
+        ,.i_data(check_depth)   //s1_d5
         // Output
-        ,.o_data(check_depth_d5)    //d9
+        ,.o_data(check_depth_d7)    //s1_d12
     );
 
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(8)
-    ) u_check_near_d8 (
+       ,.STAGE(10)
+    ) u_check_near_d10 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(check_near)   //d1
+        ,.i_data(check_near)   //s1_d2
         // Output
-        ,.o_data(check_near_d8)    //d9
+        ,.o_data(check_near_d10)    //s1_d12
     );
     
     DataDelay
@@ -765,171 +844,171 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(maskdepth_0)   //d5
+        ,.i_data(maskdepth_0)   //s1_d8
         // Output
-        ,.o_data(maskdepth_0_d4)    //d9
+        ,.o_data(maskdepth_0_d4)    //s1_d12
     );
 
-    //result_output //d14
+    //result_output //s1_d29
     assign o_valid = valid_n_u_proj_1;
-    assign o_valid_corresps = check_corresps_d5;
-    assign o_corresps_u0 = normal_0_u_i_d14;
-    assign o_corresps_v0 = normal_0_v_i_d14;
-    assign o_corresps_d0 = depth_0_d14;
-    assign o_corresps_u1 = proj_u1_d14;
-    assign o_corresps_v1 = proj_v1_d14;
-    assign o_corresps_d1 = proj_d1_r_d10;
+    assign o_valid_corresps = check_corresps_d17;
+    assign o_corresps_u0 = normal_0_u_i_d28;
+    assign o_corresps_v0 = normal_0_v_i_d28;
+    assign o_corresps_d0 = depth_0_d28;
+    assign o_corresps_u1 = proj_u1_d28;
+    assign o_corresps_v1 = proj_v1_d28;
+    assign o_corresps_d1 = proj_d1_r_d24;
     assign o_n1_x = n_u_proj_1_x;
     assign o_n1_y = n_u_proj_1_y;
     assign o_n1_z = n_u_proj_1_z;
-    assign o_dI_dx = dI_dx_d7;
-    assign o_dI_dy = dI_dy_d7;
-    assign o_data0 = RGB_0_d14;
-    assign o_data1 = proj_R1_r_d10;
+    assign o_dI_dx = dI_dx_d21;
+    assign o_dI_dy = dI_dy_d21;
+    assign o_data0 = RGB_0_d28;
+    assign o_data1 = proj_R1_r_d24;
     assign o_frame_start = ( valid_n_u_proj_1) && (!valid_n_u_proj_1_d1);
     assign o_frame_end   = (!valid_n_u_proj_1) && ( valid_n_u_proj_1_d1);
 
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(5)
-    ) u_check_corresps_d5 (
+       ,.STAGE(17)
+    ) u_check_corresps_d17 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(check_corresps)   //d9
+        ,.i_data(check_corresps)   //s1_d12
         // Output
-        ,.o_data(check_corresps_d5)    //d14
+        ,.o_data(check_corresps_d17)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(H_SIZE_BW)
-       ,.STAGE(14)
-    ) u_normal_0_u_i_d14 (
+       ,.STAGE(28)
+    ) u_normal_0_u_i_d28 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(normal_0_u_i)   //d0
+        ,.i_data(normal_0_u_i)   //s1_d1
         // Output
-        ,.o_data(normal_0_u_i_d14)    //d14
+        ,.o_data(normal_0_u_i_d28)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(V_SIZE_BW)
-       ,.STAGE(14)
-    ) u_normal_0_v_i_d14 (
+       ,.STAGE(28)
+    ) u_normal_0_v_i_d28 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(normal_0_v_i)   //d0
+        ,.i_data(normal_0_v_i)   //s1_d1
         // Output
-        ,.o_data(normal_0_v_i_d14)    //d14
+        ,.o_data(normal_0_v_i_d28)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(DATA_DEPTH_BW)
-       ,.STAGE(14)
-    ) u_depth_0_d14 (
+       ,.STAGE(28)
+    ) u_depth_0_d28 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(depth_0)   //d0
+        ,.i_data(depth_0)   //s1_d1
         // Output
-        ,.o_data(depth_0_d14)    //d14
+        ,.o_data(depth_0_d28)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(H_SIZE_BW)
-       ,.STAGE(10)
-    ) u_proj_u1_d14 (
+       ,.STAGE(24)
+    ) u_proj_u1_d28 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_u1_d4)    //d4
+        ,.i_data(proj_u1_d4)    //s1_d5
         // Output
-        ,.o_data(proj_u1_d14)    //d14
+        ,.o_data(proj_u1_d28)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(V_SIZE_BW)
-       ,.STAGE(10)
-    ) u_proj_v1_d14 (
+       ,.STAGE(24)
+    ) u_proj_v1_d28 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_v1_d4)    //d4
+        ,.i_data(proj_v1_d4)    //s1_d5
         // Output
-        ,.o_data(proj_v1_d14)    //d14
+        ,.o_data(proj_v1_d28)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(DATA_DEPTH_BW)
-       ,.STAGE(10)
-    ) u_proj_d1_r_d10 (
+       ,.STAGE(24)
+    ) u_proj_d1_r_d24 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_d1_r)   //d4
+        ,.i_data(proj_d1_r)   //s1_d5
         // Output
-        ,.o_data(proj_d1_r_d10)    //d14
+        ,.o_data(proj_d1_r_d24)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(DATA_RGB_BW+1)
-       ,.STAGE(7)
-    ) u_dI_dx_d7 (
+       ,.STAGE(21)
+    ) u_dI_dx_d21 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(dI_dx)   //d7
+        ,.i_data(dI_dx)   //s1_d8
         // Output
-        ,.o_data(dI_dx_d7)    //d14
+        ,.o_data(dI_dx_d21)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(DATA_RGB_BW+1)
-       ,.STAGE(7)
-    ) u_dI_dy_d7 (
+       ,.STAGE(21)
+    ) u_dI_dy_d21 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(dI_dy)   //d7
+        ,.i_data(dI_dy)   //s1_d8
         // Output
-        ,.o_data(dI_dy_d7)    //d14
+        ,.o_data(dI_dy_d21)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(DATA_RGB_BW)
-       ,.STAGE(14)
-    ) u_RGB_0_d14 (
+       ,.STAGE(28)
+    ) u_RGB_0_d28 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(RGB_0)   //d0
+        ,.i_data(RGB_0)   //s1_d1
         // Output
-        ,.o_data(RGB_0_d14)    //d14
+        ,.o_data(RGB_0_d28)    //s1_d29
     );
 
     DataDelay
     #(
         .DATA_BW(DATA_RGB_BW)
-       ,.STAGE(10)
-    ) u_proj_R1_r_d10 (
+       ,.STAGE(24)
+    ) u_proj_R1_r_d24 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(proj_R1_r)   //d0
+        ,.i_data(proj_R1_r)   //s1_d5
         // Output
-        ,.o_data(proj_R1_r_d10)    //d14
+        ,.o_data(proj_R1_r_d24)    //s1_d29
     );
 
     DataDelay
@@ -940,15 +1019,16 @@ module ComputeCorresps
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_n_u_proj_1)   //d14
+        ,.i_data(valid_n_u_proj_1)   //s1_d29
         // Output
-        ,.o_data(valid_n_u_proj_1_d1)    //d15
+        ,.o_data(valid_n_u_proj_1_d1)    //s1_d30
     );
 
     //===================
     //    Sequential
     //===================
     //dstFrame input
+        //dst_d0 = d0
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) u1_r <= 0;
         else if (i_update_done) u1_r <= 0;
@@ -962,6 +1042,7 @@ module ComputeCorresps
     end
 
     //dstFrame_lb_store
+        //dst_d1 = d1
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) valid_1_r <= 0;
         else valid_1_r <= i_valid_1;
@@ -982,6 +1063,7 @@ module ComputeCorresps
         else dstFrame_lb_store_index_r <= dstFrame_lb_store_index_w;    //d1
     end
 
+        //dst_d2 = d2
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             for(int i = 0; i <= 62; i = i + 1)begin
@@ -993,13 +1075,13 @@ module ComputeCorresps
                 o_dstFrame_lb_sram_odd_AA_r[i]    <= '0;
             end
         end
-        else if (valid_1_r) begin   //d1
-            case (dstFrame_lb_store_index_r)    //d1
+        else if (valid_1_r) begin   //dst_d1 = d1
+            case (dstFrame_lb_store_index_r)    //dst_d1 = d1
                 6'd0 : begin
-                    if (u1_r_d1[0] == 0) begin  //d1
+                    if (u1_r_d1[0] == 0) begin  //dst_d1 = d1
                         o_dstFrame_lb_sram_even_WENA_r[0] <= '0;    
-                        o_dstFrame_lb_sram_even_DA_r[0]   <= o_dstFrame_lb_sram_DA_w;   //d2
-                        o_dstFrame_lb_sram_even_AA_r[0]   <= dstFrame_lb_store_addr;    //d2
+                        o_dstFrame_lb_sram_even_DA_r[0]   <= o_dstFrame_lb_sram_DA_w;   //dst_d2 = d2
+                        o_dstFrame_lb_sram_even_AA_r[0]   <= dstFrame_lb_store_addr;    //dst_d2 = d2
                         for(int i = 1; i <= 62; i = i + 1)begin
                             o_dstFrame_lb_sram_even_WENA_r[i] <= '1;
                             o_dstFrame_lb_sram_even_DA_r[i]   <= '0;
@@ -3638,6 +3720,7 @@ module ComputeCorresps
     end
 
     //srcFrame input
+        //src_d0 = dst_d0 + d640*31 = dst_d0 + d19840 = d19840
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) u0_r <= 0;
         else if (i_update_done) u0_r <= 0;
@@ -3650,6 +3733,7 @@ module ComputeCorresps
         else v0_r <= v0_w;
     end
 
+        //src_d1 = d19841; use start at s1_d1 = src_d0 + d640 + d1 = d20481
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) i_d0_r <= 0;
         else i_d0_r <= i_depth0;
@@ -3667,16 +3751,20 @@ module ComputeCorresps
             o_srcFrame_lb_sram_AB_r   <= 0;
         end
         else begin
+                //s1_d-16 = d20464
             i_srcFrame_lb_sram_QB_r   <= i_srcFrame_lb_sram_QB;
+                //src_d1 = d19841
             o_srcFrame_lb_sram_WENA_r <= o_srcFrame_lb_sram_WENA_w;
-            o_srcFrame_lb_sram_WENB_r <= o_srcFrame_lb_sram_WENB_w;
             o_srcFrame_lb_sram_DA_r   <= o_srcFrame_lb_sram_DA_w;
-            o_srcFrame_lb_sram_DB_r   <= o_srcFrame_lb_sram_DB_w;
             o_srcFrame_lb_sram_AA_r   <= o_srcFrame_lb_sram_AA_w;
+                //s1_d-18 = d20462
+            o_srcFrame_lb_sram_WENB_r <= o_srcFrame_lb_sram_WENB_w;
+            o_srcFrame_lb_sram_DB_r   <= o_srcFrame_lb_sram_DB_w;
             o_srcFrame_lb_sram_AB_r   <= o_srcFrame_lb_sram_AB_w;
         end
     end
 
+        //s1_d-18 = src_d0 + d640 - d19 + d1 = d20462
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) valid_load_0_r <= 0;
         // else if (i_update_done) valid_load_0_r <= 0;
@@ -3684,15 +3772,17 @@ module ComputeCorresps
     end
 
     //dstFrame_lb_load
+        //s1_d2
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) dstFrame_lb_load_index_r <= 0;
         // else if (i_update_done) dstFrame_lb_load_index_r <= 0;
-        else dstFrame_lb_load_index_r <= dstFrame_lb_load_index_w;  //d1
+        else dstFrame_lb_load_index_r <= dstFrame_lb_load_index_w;
     end
 
+        //s1_d2
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) proj_u1_r <= 0;
-        else proj_u1_r <= proj_u1;  //d1
+        else proj_u1_r <= proj_u1;
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
@@ -3714,15 +3804,16 @@ module ComputeCorresps
         end
     end
 
+        //s1_d3
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             for(int i = 0; i <= 62; i = i + 1) begin o_dstFrame_lb_sram_even_AB_r[i] <= idle_Addr; end
             for(int i = 0; i <= 62; i = i + 1) begin o_dstFrame_lb_sram_odd_AB_r[i]  <= idle_Addr; end
         end
-        else if (valid_normal_0_start_d1) begin   //d1
-            case (dstFrame_lb_load_index_r)     //d1
+        else if (valid_normal_0_start_d1) begin   //s1_d2
+            case (dstFrame_lb_load_index_r)     //s1_d2
                 8'd0 : begin
-                    if (proj_u1_r[0] == 0 && proj_u1_r < r_hsize-1 && proj_v1_r < r_vsize-1) begin
+                    if (proj_u1_r[0] == 0 && proj_u1_r < r_hsize-1 && proj_v1_r < r_vsize-1) begin  //s1_d2
                         o_dstFrame_lb_sram_even_AB_r[0] <= dstFrame_lb_load_addr;
                         o_dstFrame_lb_sram_odd_AB_r[0]  <= dstFrame_lb_load_addr;
                         o_dstFrame_lb_sram_even_AB_r[1] <= dstFrame_lb_load_addr;
@@ -5735,14 +5826,15 @@ module ComputeCorresps
         end
     end
 
+        //s1_d5
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin 
             i_dstFrame_lb_sram_QB_r   <= '0; 
             i_dstFrame_lb_sram_QB_u_r <= '0;
             i_dstFrame_lb_sram_QB_v_r <= '0;
         end
-        else if (valid_normal_0_start_d3) begin      //d3
-            case (dstFrame_lb_load_index_r_d2)  //d3
+        else if (valid_normal_0_start_d3) begin      //s1_d4
+            case (dstFrame_lb_load_index_r_d2)  //s1_d4
                 8'd0 : begin
                     if (proj_u1_d3[0] == 0 && proj_u1_d3 < r_hsize-1 && proj_v1_d3 < r_vsize-1) begin
                         i_dstFrame_lb_sram_QB_r   <= i_dstFrame_lb_sram_even_QB[0];
@@ -7144,9 +7236,10 @@ module ComputeCorresps
     end
 
     //proj_normal_compute
+        //s1_d2
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) proj_v1_r <= 0;
-        else proj_v1_r <= proj_v1;  //d1
+        else proj_v1_r <= proj_v1;
     end
 endmodule
 

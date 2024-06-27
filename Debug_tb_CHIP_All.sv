@@ -3,61 +3,7 @@
 // `define TIME_OUT 640*1500*10       
 `define TIME_OUT 640*3100*10     
 
-// `ifdef RTL
-    // `include "common/RgbdVoConfigPk.sv"
-    `include "CHIP_All.sv"
-    // `include "CHIP_fea.sv"
-    // `include "SRAM_all.sv"
-    // `include "FAST.sv"      //CHIP_fea.sv
-    // `include "BRIEF_Top.sv" //CHIP_fea.sv
-    // `include "MATCH_Top.sv" //CHIP_fea.sv
-    // `include "SMOOTH.sv"        //FAST.sv
-    // `include "FAST_9.sv"        //FAST.sv
-    // `include "NMS.sv"           //FAST.sv
-    // `include "Orientation.sv"   //FAST.sv
-    // // `include "DW_sqrt.v"         //Orientation.sv
-    // // `include "DW_div.v"          //Orientation.sv
-    // `include "Key_Buffer1.sv"   //BRIEF_Top.sv
-    // `include "BRIEF.sv"         //BRIEF_Top.sv
-    // `include "LUT.sv"               //BRIEF.sv
-    // `include "Key_Buffer2.sv"   //MATCH_Top.sv
-    // `include "MATCH.sv"         //MATCH_Top.sv
-    // `include "MATCH_mem.sv"     //MATCH_Top.sv
-    // `include "HAMMING.sv"           //MATCH.sv
-    // `include "sram_v3/sram_lb_FAST.v"
-    // `include "sram_v3/sram_dp_dstFrame.v"
-    // `include "sram_v3/sram_dp_desc_8.v"
-    // `include "./DW02_mult_2_stage.v"
-    // `include "./DW_div.v"
-    // `include "./DW_div_pipe.v"
-    // `include "./DW02_mult.v"
-    // `include "./DW_mult_pipe.v"
-    // `include "./DW_sqrt.v"
-    // `include "./DW_sqrt_pipe.v" //Rodrigues.sv"
-    // `include "./DW_sincos.v"    //Rodrigues.sv"
-    // `include "./Idx2Cloud.sv"
-    // `include "./TransMat.sv"
-    // `include "./Proj.sv"
-    // `include "./DataDelay.sv"
-    // `include "./IndirectCoe.sv"
-    // `include "./IndirectCalc.sv"
-    // `include "./MulAcc.sv"
-    // `include "./Matrix.sv"
-    // `include "./LDLT.sv"
-    // `include "./Solver.sv"
-    // `include "./Rodrigues.sv"
-    // `include "./UpdatePose.sv"
-    // `include "./ComputeCorresps.sv"
-    // `include "./normalComputer.sv"
-    // `include "./normalUnitization.sv"
-    // `include "./OuterProduct.sv"
-    // `include "./CalcICPLsmMatrices.sv"
-    // `include "./CalcRgbdLsmMatrices.sv"
-    // `include "./sigma_icp_generator.sv"
-    // `include "./sigma_rgbd_generator.sv"
-    // `include "./AtA_AtB_of_Direct.sv"
-    // `include "./gradient.sv"
-// `endif
+`include "CHIP_All.sv"
 
 // simulation
 // RTL: ncverilog Debug_tb_CHIP_All.sv +incdir+/opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver/ -y /opt/CAD/synopsys/synthesis/2019.12/dw/sim_ver +libext+.v+notimingchecks +define+RTL +access+r 
@@ -116,7 +62,6 @@ module Debug_tb_CHIP_All;
 
     initial begin
         f_poes = $fopen("./result/pose.txt","w");
-
         clk         = 1'b1;
         rst_n       = 1'b1;  
         i           = 0;
@@ -466,5 +411,4 @@ module Debug_tb_CHIP_All;
             $fwrite(f_poes, "\n");
         end
     end
-
 endmodule

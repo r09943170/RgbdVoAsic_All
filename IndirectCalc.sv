@@ -5,7 +5,7 @@
 // ---------------------------
 // Li-Yang Huang <lyhuang@media.ee.ntu.edu.tw>, 2023
 
-
+//22T
 module IndirectCalc
     import RgbdVoConfigPk::*;
 #(
@@ -50,29 +50,38 @@ module IndirectCalc
     //=================================
     // Signal Declaration
     //=================================
+    //d6
     logic                     cloud_valid;
     logic [CLOUD_BW-1:0]      cloud_x;
     logic [CLOUD_BW-1:0]      cloud_y;
     logic [CLOUD_BW-1:0]      cloud_z;
+
+    //d9
     logic                     trans_valid;
     logic [CLOUD_BW-1:0]      trans_x;
     logic [CLOUD_BW-1:0]      trans_y;
     logic [CLOUD_BW-1:0]      trans_z;
+
+    //d17
     logic                     proj_valid;
     logic [H_SIZE_BW-1:0]     proj_x;
     logic [V_SIZE_BW-1:0]     proj_y;
     logic [H_SIZE_BW-1:0]     idx1_x_dly;
     logic [V_SIZE_BW-1:0]     idx1_y_dly;
+
+    //d18
     logic [H_SIZE_BW:0]       diffs_x_r;
     logic [V_SIZE_BW:0]       diffs_y_r;
+
+    //d22
+    logic [H_SIZE_BW:0]       diffs_x_r_d4;
+    logic [V_SIZE_BW:0]       diffs_y_r_d4;
 
     //=================================
     // Combinational Logic
     //=================================
-    assign o_diffs_x = {{(ID_COE_BW-H_SIZE_BW-1-MUL){diffs_x_r[H_SIZE_BW-1]}},diffs_x_r,{MUL{1'b0}}};
-    assign o_diffs_y = {{(ID_COE_BW-V_SIZE_BW-1-MUL){diffs_y_r[V_SIZE_BW-1]}},diffs_y_r,{MUL{1'b0}}};
-
-    //4T
+    //d6
+    //6T
     Idx2Cloud u_idx2cloud (
         // input
          .i_clk   ( i_clk )
@@ -93,6 +102,7 @@ module IndirectCalc
         ,.o_cloud_z (cloud_z)
     );
 
+    //d9
     //3T
     // [P'] = [R|t][P]  --  p.166(7.37)
     TransMat u_transmat(
@@ -111,7 +121,59 @@ module IndirectCalc
         ,.o_cloud_z  ( trans_z )
     );
 
-    //5T
+    //d17
+    //8T
+    //[su] = [K][P']  --  p.166(7.38)(7.39)(7.40)
+    Proj u_proj (
+        // input
+         .i_clk      ( i_clk )
+        ,.i_rst_n    ( i_rst_n )
+        ,.i_valid   ( trans_valid )
+        ,.i_cloud_x ( trans_x )
+        ,.i_cloud_y ( trans_y )
+        ,.i_cloud_z ( trans_z )
+        // Register
+        ,.r_fx      ( r_fx )
+        ,.r_fy      ( r_fy )
+        ,.r_cx      ( r_cx )
+        ,.r_cy      ( r_cy )
+        // Output
+        ,.o_valid   ( proj_valid ) 
+        ,.o_idx_x   ( proj_x )
+        ,.o_idx_y   ( proj_y )
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(H_SIZE_BW)
+       ,.STAGE(17)
+    ) u_idx1_x_delay (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(i_idx1_x)
+        // Output
+        ,.o_data(idx1_x_dly)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(V_SIZE_BW)
+       ,.STAGE(17)
+    ) u_idx1_y_delay (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(i_idx1_y)
+        // Output
+        ,.o_data(idx1_y_dly)
+    );
+
+    //d22
+    assign o_diffs_x = {{(ID_COE_BW-H_SIZE_BW-1-MUL){diffs_x_r_d4[H_SIZE_BW-1]}},diffs_x_r_d4,{MUL{1'b0}}};
+    assign o_diffs_y = {{(ID_COE_BW-V_SIZE_BW-1-MUL){diffs_y_r_d4[V_SIZE_BW-1]}},diffs_y_r_d4,{MUL{1'b0}}};
+
+    //13T
     //p.167(7.45)
     IndirectCoe u_indirect_coe(
         // input
@@ -142,57 +204,10 @@ module IndirectCalc
         ,.o_Ay_5   ( o_Ay_5 )
     );
 
-    //4T
-    //[su] = [K][P']  --  p.166(7.38)(7.39)(7.40)
-    Proj u_proj (
-        // input
-         .i_clk      ( i_clk )
-        ,.i_rst_n    ( i_rst_n )
-        ,.i_valid   ( trans_valid )
-        ,.i_cloud_x ( trans_x )
-        ,.i_cloud_y ( trans_y )
-        ,.i_cloud_z ( trans_z )
-        // Register
-        ,.r_fx      ( r_fx )
-        ,.r_fy      ( r_fy )
-        ,.r_cx      ( r_cx )
-        ,.r_cy      ( r_cy )
-        // Output
-        ,.o_valid   ( proj_valid ) 
-        ,.o_idx_x   ( proj_x )
-        ,.o_idx_y   ( proj_y )
-    );
-
-    DataDelay
-    #(
-        .DATA_BW(H_SIZE_BW)
-       ,.STAGE(11)
-    ) u_idx1_x_delay (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(i_idx1_x)
-        // Output
-        ,.o_data(idx1_x_dly)
-    );
-
-    DataDelay
-    #(
-        .DATA_BW(V_SIZE_BW)
-       ,.STAGE(11)
-    ) u_idx1_y_delay (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(i_idx1_y)
-        // Output
-        ,.o_data(idx1_y_dly)
-    );
-
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(12)
+       ,.STAGE(22)
     ) u_frame_start_delay (
         // input
          .i_clk(i_clk)
@@ -205,7 +220,7 @@ module IndirectCalc
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(12)
+       ,.STAGE(22)
     ) u_frame_end_delay (
         // input
          .i_clk(i_clk)
@@ -215,9 +230,36 @@ module IndirectCalc
         ,.o_data(o_frame_end)
     );
 
+    DataDelay
+    #(
+        .DATA_BW(H_SIZE_BW+1)
+       ,.STAGE(4)
+    ) u_diffs_x_r_d4 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(diffs_x_r)
+        // Output
+        ,.o_data(diffs_x_r_d4)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(V_SIZE_BW+1)
+       ,.STAGE(4)
+    ) u_diffs_y_r_d4 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(diffs_y_r)
+        // Output
+        ,.o_data(diffs_y_r_d4)
+    );
+
     //===================
     //    Sequential
     //===================
+    //d18
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) diffs_x_r <= '0;
         else diffs_x_r <= $signed(idx1_x_dly) - $signed(proj_x);

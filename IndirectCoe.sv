@@ -7,6 +7,7 @@
 
 `include "common/RgbdVoConfigPk.sv"
 
+//13T
 module IndirectCoe
     import RgbdVoConfigPk::*;
 #(
@@ -42,82 +43,77 @@ module IndirectCoe
     //=================================
     // Signal Declaration
     //=================================
-    logic [CLOUD_BW+CLOUD_BW-1:0]            cloud_xy;
-    logic [CLOUD_BW+CLOUD_BW-1:0]            cloud_xx;
-    logic [CLOUD_BW+CLOUD_BW-1:0]            cloud_yy;
-    logic [CLOUD_BW+CLOUD_BW-1:0]            cloud_zz;
-    logic [CLOUD_BW+CLOUD_BW-1:0]            cloud_zz_d1;
-    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0]      cloud_xy_fx;
-    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0]      cloud_xx_fx;
-    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0]      cloud_yy_fy;
-    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0]      ax0_tmp;
-    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0]      ax1_tmp;
-    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0]      ax0_final_r;
-    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0]      ax1_final_r;
-    logic [CLOUD_BW+FX_BW-1:0]      cloud_y_fx;
-    logic [CLOUD_BW-1:0]            cloud_z_d1;
-    logic [CLOUD_BW+FX_BW-1:0]      ax2_tmp;
-    logic [CLOUD_BW+FX_BW-1:0]      ax2_final_r;
-    logic [FX_BW+MUL-1:0]           fx_mul;
-    logic [FX_BW+MUL-1:0]           ax3_tmp;
-    logic [FX_BW+MUL-1:0]           ax3_final;
-    logic [CLOUD_BW+FX_BW-1:0]      cloud_x_fx;
-    logic [CLOUD_BW+FX_BW+MUL-1:0]  cloud_x_fx_mul;
-    logic [CLOUD_BW+FX_BW+MUL-1:0]  ax5_tmp;
-    logic [CLOUD_BW+FX_BW+MUL-1:0]  ax5_final_r;
-    logic [ID_COE_BW-1:0]           ax2_final_dly;
-    logic [ID_COE_BW-1:0]           ax3_final_dly;
-    logic [ID_COE_BW-1:0]           ax5_final_dly;
-    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0]      ay0_tmp;
-    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0]      ay0_final_r;
-    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0]      cloud_xy_fy;
-    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0]      ay1_tmp;
-    logic [ID_COE_BW-1:0]                    ay1_final_dly;
-    logic [CLOUD_BW+FY_BW-1:0]      cloud_x_fy;
-    logic [CLOUD_BW+FY_BW-1:0]      ay2_tmp;
-    logic [ID_COE_BW-1:0]           ay2_final_dly;
-    logic [FY_BW+MUL-1:0]           fy_mul;
-    logic [FY_BW+MUL-1:0]           ay4_tmp;
-    logic [ID_COE_BW-1:0]           ay4_final_dly;
-    logic [CLOUD_BW+FY_BW-1:0]      cloud_y_fy;
-    logic [CLOUD_BW+FY_BW+MUL-1:0]  cloud_y_fy_mul;
-    logic [CLOUD_BW+FY_BW+MUL-1:0]  ay5_tmp;
-    logic [CLOUD_BW+FY_BW+MUL-1:0]  ay5_final_r;
-    logic [ID_COE_BW-1:0]           ay5_final_dly;
+    //d0
+    logic [FX_BW+MUL-1:0]               fx_mul;
+    logic [FY_BW+MUL-1:0]               fy_mul;
+
+    //d1
+    logic [CLOUD_BW+CLOUD_BW-1:0]       cloud_xy;
+    logic [CLOUD_BW+CLOUD_BW-1:0]       cloud_xx;
+    logic [CLOUD_BW+CLOUD_BW-1:0]       cloud_yy;
+    logic [CLOUD_BW+CLOUD_BW-1:0]       cloud_zz;
+    logic [CLOUD_BW+FX_BW-1:0]          cloud_y_fx;
+    logic [CLOUD_BW+FY_BW-1:0]          cloud_x_fy;
+    logic [CLOUD_BW+FX_BW-1:0]          cloud_x_fx;
+    logic [CLOUD_BW+FX_BW+MUL-1:0]      cloud_x_fx_mul;
+    logic [CLOUD_BW+FY_BW-1:0]          cloud_y_fy;
+    logic [CLOUD_BW+FY_BW+MUL-1:0]      cloud_y_fy_mul;
+    logic [CLOUD_BW-1:0]                cloud_z_d1;
+
+    //d2
+    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0] cloud_xy_fx;
+    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0] cloud_xy_fy;
+    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0] cloud_xx_fx;
+    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0] cloud_yy_fy;
+    logic [CLOUD_BW+CLOUD_BW-1:0]       cloud_zz_d1;
+
+    //d6
+    logic [FX_BW+MUL-1:0]               ax3_tmp;
+    logic [FY_BW+MUL-1:0]               ay4_tmp;
+
+    //d7
+    logic [CLOUD_BW+FX_BW-1:0]          ax2_tmp;
+    logic [CLOUD_BW+FY_BW-1:0]          ay2_tmp;
+
+    //d8
+    logic [CLOUD_BW+FX_BW-1:0]          ax2_final_r;
+
+    //d11
+    logic [CLOUD_BW+FX_BW+MUL-1:0]      ax5_tmp;
+    logic [CLOUD_BW+FY_BW+MUL-1:0]      ay5_tmp;
+
+    //d12
+    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0] ax0_tmp;
+    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0] ax1_tmp;
+    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0] ay0_tmp;
+    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0] ay1_tmp;
+
+    logic [CLOUD_BW+FX_BW+MUL-1:0]      ax5_final_r;
+    logic [CLOUD_BW+FY_BW+MUL-1:0]      ay5_final_r;
+
+    //d13
+    logic [ID_COE_BW-1:0]               ax3_final_dly;
+    logic [ID_COE_BW-1:0]               ay4_final_dly;
+    logic [ID_COE_BW-1:0]               ay2_final_dly;
+    logic [ID_COE_BW-1:0]               ax2_final_dly;
+    logic [ID_COE_BW-1:0]               ax5_final_dly;
+    logic [ID_COE_BW-1:0]               ay1_final_dly;
+    logic [ID_COE_BW-1:0]               ay5_final_dly;
+
+    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0] ax0_final_r;
+    logic [CLOUD_BW+CLOUD_BW+FX_BW-1:0] ax1_final_r;
+    logic [CLOUD_BW+CLOUD_BW+FY_BW-1:0] ay0_final_r;
 
     //=================================
     // Combinational Logic
     //=================================
-    assign o_Ax_0 = ax0_final_r[ID_COE_BW-1:0];
-    assign o_Ax_1 = ax1_final_r[ID_COE_BW-1:0];
-    assign o_Ax_2 = ax2_final_dly;
-    assign o_Ax_3 = ax3_final_dly;
-    assign o_Ax_4 = '0;
-    assign o_Ax_5 = ax5_final_dly;
-    assign o_Ay_0 = ay0_final_r[ID_COE_BW-1:0];
-    assign o_Ay_1 = ay1_final_dly;
-    assign o_Ay_2 = ay2_final_dly;
-    assign o_Ay_3 = '0;
-    assign o_Ay_4 = ay4_final_dly;
-    assign o_Ay_5 = ay5_final_dly;
-
+    //d0
     assign fx_mul = {r_fx,{MUL{1'b0}}};
     assign fy_mul = {r_fy,{MUL{1'b0}}};
+
+    //d1
     assign cloud_x_fx_mul = {cloud_x_fx,{MUL{1'b0}}};
     assign cloud_y_fy_mul = {cloud_y_fy,{MUL{1'b0}}};
- 
-    DataDelay
-    #(
-        .DATA_BW(1)
-       ,.STAGE(5)
-    ) u_valid_dly (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(i_valid)
-        // Output
-        ,.o_data(o_valid)
-    );
 
     DW02_mult_2_stage #(
          .A_width(CLOUD_BW)
@@ -161,50 +157,6 @@ module IndirectCoe
         ,.TC(1'b1)
         ,.CLK(i_clk)
         ,.PRODUCT(cloud_zz)
-    );
-
-    DW02_mult_2_stage #(
-         .A_width(CLOUD_BW+CLOUD_BW)
-        ,.B_width(FX_BW)
-    ) u_cloud_xy_fx (
-         .A(cloud_xy)
-        ,.B(r_fx)
-        ,.TC(1'b1)
-        ,.CLK(i_clk)
-        ,.PRODUCT(cloud_xy_fx)
-    );
-
-    DW02_mult_2_stage #(
-         .A_width(CLOUD_BW+CLOUD_BW)
-        ,.B_width(FY_BW)
-    ) u_cloud_xy_fy (
-         .A(cloud_xy)
-        ,.B(r_fy)
-        ,.TC(1'b1)
-        ,.CLK(i_clk)
-        ,.PRODUCT(cloud_xy_fy)
-    );
-
-    DW02_mult_2_stage #(
-         .A_width(CLOUD_BW+CLOUD_BW)
-        ,.B_width(FX_BW)
-    ) u_cloud_xx_fx (
-         .A(cloud_xx)
-        ,.B(r_fx)
-        ,.TC(1'b1)
-        ,.CLK(i_clk)
-        ,.PRODUCT(cloud_xx_fx)
-    );
-
-    DW02_mult_2_stage #(
-         .A_width(CLOUD_BW+CLOUD_BW)
-        ,.B_width(FY_BW)
-    ) u_cloud_yy_fy (
-         .A(cloud_yy)
-        ,.B(r_fy)
-        ,.TC(1'b1)
-        ,.CLK(i_clk)
-        ,.PRODUCT(cloud_yy_fy)
     );
 
     DW02_mult_2_stage #(
@@ -253,19 +205,6 @@ module IndirectCoe
 
     DataDelay
     #(
-        .DATA_BW(CLOUD_BW+CLOUD_BW)
-       ,.STAGE(1)
-    ) u_cloud_zz_d1 (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(cloud_zz)
-        // Output
-        ,.o_data(cloud_zz_d1)
-    );
-
-    DataDelay
-    #(
         .DATA_BW(CLOUD_BW)
        ,.STAGE(1)
     ) u_cloud_z_d1 (
@@ -277,72 +216,71 @@ module IndirectCoe
         ,.o_data(cloud_z_d1)
     );
 
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+CLOUD_BW+FX_BW)
-        ,.b_width(CLOUD_BW+CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ax0_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_xy_fx)
-        ,.b(cloud_zz_d1)
-        ,.quotient(ax0_tmp)
-        ,.remainder()
-        ,.divide_by_0()
+    //d2
+    DW02_mult_2_stage #(
+         .A_width(CLOUD_BW+CLOUD_BW)
+        ,.B_width(FX_BW)
+    ) u_cloud_xy_fx (
+         .A(cloud_xy)
+        ,.B(r_fx)
+        ,.TC(1'b1)
+        ,.CLK(i_clk)
+        ,.PRODUCT(cloud_xy_fx)
     );
 
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+CLOUD_BW+FX_BW)
-        ,.b_width(CLOUD_BW+CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ax1_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_xx_fx)
-        ,.b(cloud_zz_d1)
-        ,.quotient(ax1_tmp)
-        ,.remainder()
-        ,.divide_by_0()
+    DW02_mult_2_stage #(
+         .A_width(CLOUD_BW+CLOUD_BW)
+        ,.B_width(FY_BW)
+    ) u_cloud_xy_fy (
+         .A(cloud_xy)
+        ,.B(r_fy)
+        ,.TC(1'b1)
+        ,.CLK(i_clk)
+        ,.PRODUCT(cloud_xy_fy)
     );
 
+    DW02_mult_2_stage #(
+         .A_width(CLOUD_BW+CLOUD_BW)
+        ,.B_width(FX_BW)
+    ) u_cloud_xx_fx (
+         .A(cloud_xx)
+        ,.B(r_fx)
+        ,.TC(1'b1)
+        ,.CLK(i_clk)
+        ,.PRODUCT(cloud_xx_fx)
+    );
+
+    DW02_mult_2_stage #(
+         .A_width(CLOUD_BW+CLOUD_BW)
+        ,.B_width(FY_BW)
+    ) u_cloud_yy_fy (
+         .A(cloud_yy)
+        ,.B(r_fy)
+        ,.TC(1'b1)
+        ,.CLK(i_clk)
+        ,.PRODUCT(cloud_yy_fy)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(CLOUD_BW+CLOUD_BW)
+       ,.STAGE(1)
+    ) u_cloud_zz_d1 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(cloud_zz)
+        // Output
+        ,.o_data(cloud_zz_d1)
+    );
+
+    //d6
     DW_div_pipe #(
-         .a_width(CLOUD_BW+FX_BW)
+         .a_width(FX_BW+MUL)    //59-42
         ,.b_width(CLOUD_BW)
         ,.tc_mode(1)
         ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ax2_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_y_fx)
-        ,.b(cloud_z_d1)
-        ,.quotient(ax2_tmp)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DW_div_pipe #(
-         .a_width(FX_BW+MUL)
-        ,.b_width(CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
+        ,.num_stages(6)
         ,.stall_mode(0)
         ,.rst_mode(1)
         ,.op_iso_mode(1)
@@ -350,32 +288,81 @@ module IndirectCoe
          .clk(i_clk)
         ,.rst_n(i_rst_n)
         ,.en(1'b1)
-        ,.a(fx_mul)
-        ,.b(cloud_z_d1)
+        ,.a(fx_mul)         //all
+        ,.b(cloud_z_d1)     //d1
         ,.quotient(ax3_tmp)
         ,.remainder()
         ,.divide_by_0()
     );
 
-    DataDelay
-    #(
-        .DATA_BW(FX_BW+MUL)
-       ,.STAGE(1)
-    ) u_ax3 (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(ax3_tmp)
-        // Output
-        ,.o_data(ax3_final)
+    DW_div_pipe #(
+         .a_width(FY_BW+MUL)    //59-42
+        ,.b_width(CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(6)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ay4_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(fy_mul)         //all
+        ,.b(cloud_z_d1)     //d1
+        ,.quotient(ay4_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //d7
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+FX_BW)   //77-42
+        ,.b_width(CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(7)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ax2_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_y_fx)     //d1
+        ,.b(cloud_z_d1)     //d1
+        ,.quotient(ax2_tmp)
+        ,.remainder()
+        ,.divide_by_0()
     );
 
     DW_div_pipe #(
-         .a_width(CLOUD_BW+FX_BW+MUL)
+         .a_width(CLOUD_BW+FY_BW)   //77-42
+        ,.b_width(CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(7)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ay2_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_x_fy)     //d1
+        ,.b(cloud_z_d1)     //d1
+        ,.quotient(ay2_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //d11
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+FX_BW+MUL)   //101-84
         ,.b_width(CLOUD_BW+CLOUD_BW)
         ,.tc_mode(1)
         ,.rem_mode(1)
-        ,.num_stages(3)
+        ,.num_stages(11)
         ,.stall_mode(0)
         ,.rst_mode(1)
         ,.op_iso_mode(1)
@@ -383,37 +370,191 @@ module IndirectCoe
          .clk(i_clk)
         ,.rst_n(i_rst_n)
         ,.en(1'b1)
-        ,.a(cloud_x_fx_mul)
-        ,.b(cloud_zz)
+        ,.a(cloud_x_fx_mul)     //d1
+        ,.b(cloud_zz)           //d1
         ,.quotient(ax5_tmp)
         ,.remainder()
         ,.divide_by_0()
     );
 
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+FY_BW+MUL)   //101-84
+        ,.b_width(CLOUD_BW+CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(11)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ay5_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_y_fy_mul)     //d1
+        ,.b(cloud_zz)           //d1
+        ,.quotient(ay5_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //d12
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+CLOUD_BW+FX_BW)  //119-84
+        ,.b_width(CLOUD_BW+CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(11)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ax0_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_xy_fx)    //d2
+        ,.b(cloud_zz_d1)    //d2
+        ,.quotient(ax0_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+CLOUD_BW+FX_BW)  //119-84
+        ,.b_width(CLOUD_BW+CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(11)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ax1_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_xx_fx)    //d2
+        ,.b(cloud_zz_d1)    //d2
+        ,.quotient(ax1_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+CLOUD_BW+FY_BW)  //119-84
+        ,.b_width(CLOUD_BW+CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(11)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ay0_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_yy_fy)    //d2
+        ,.b(cloud_zz_d1)    //d2
+        ,.quotient(ay0_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+CLOUD_BW+FY_BW)  //119-84
+        ,.b_width(CLOUD_BW+CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(11)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_ay1_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(cloud_xy_fy)    //d2
+        ,.b(cloud_zz_d1)    //d2
+        ,.quotient(ay1_tmp)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //d13
+    assign o_Ax_0 = ax0_final_r[ID_COE_BW-1:0];
+    assign o_Ax_1 = ax1_final_r[ID_COE_BW-1:0];
+    assign o_Ax_2 = ax2_final_dly;
+    assign o_Ax_3 = ax3_final_dly;
+    assign o_Ax_4 = '0;
+    assign o_Ax_5 = ax5_final_dly;
+    assign o_Ay_0 = ay0_final_r[ID_COE_BW-1:0];
+    assign o_Ay_1 = ay1_final_dly;
+    assign o_Ay_2 = ay2_final_dly;
+    assign o_Ay_3 = '0;
+    assign o_Ay_4 = ay4_final_dly;
+    assign o_Ay_5 = ay5_final_dly;
+ 
     DataDelay
     #(
-        .DATA_BW(ID_COE_BW)
-       ,.STAGE(1)
-    ) u_ax2_dly (
+        .DATA_BW(1)
+       ,.STAGE(13)
+    ) u_valid_dly (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(ax2_final_r[ID_COE_BW-1:0])
+        ,.i_data(i_valid)
         // Output
-        ,.o_data(ax2_final_dly)
+        ,.o_data(o_valid)
     );
 
     DataDelay
     #(
         .DATA_BW(ID_COE_BW)
-       ,.STAGE(1)
+       ,.STAGE(7)
     ) u_ax3_dly (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(ax3_final[ID_COE_BW-1:0])
+        ,.i_data(ax3_tmp[ID_COE_BW-1:0])    //d6
         // Output
         ,.o_data(ax3_final_dly)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(ID_COE_BW)
+       ,.STAGE(7)
+    ) u_ay4_dly (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(ay4_tmp[ID_COE_BW-1:0])    //d6
+        // Output
+        ,.o_data(ay4_final_dly)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(ID_COE_BW)
+       ,.STAGE(6)
+    ) u_ay2_dly (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(ay2_tmp[ID_COE_BW-1:0])    //d7
+        // Output
+        ,.o_data(ay2_final_dly)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(ID_COE_BW)
+       ,.STAGE(5)
+    ) u_ax2_dly (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(ax2_final_r[ID_COE_BW-1:0])    //d8
+        // Output
+        ,.o_data(ax2_final_dly)
     );
 
     DataDelay
@@ -424,49 +565,9 @@ module IndirectCoe
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(ax5_final_r[ID_COE_BW-1:0])
+        ,.i_data(ax5_final_r[ID_COE_BW-1:0])    //d12
         // Output
         ,.o_data(ax5_final_dly)
-    );
-
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+CLOUD_BW+FY_BW)
-        ,.b_width(CLOUD_BW+CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ay0_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_yy_fy)
-        ,.b(cloud_zz_d1)
-        ,.quotient(ay0_tmp)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+CLOUD_BW+FY_BW)
-        ,.b_width(CLOUD_BW+CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ay1_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_xy_fy)
-        ,.b(cloud_zz_d1)
-        ,.quotient(ay1_tmp)
-        ,.remainder()
-        ,.divide_by_0()
     );
 
     DataDelay
@@ -477,95 +578,9 @@ module IndirectCoe
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(ay1_tmp[ID_COE_BW-1:0])
+        ,.i_data(ay1_tmp[ID_COE_BW-1:0])    //d12
         // Output
         ,.o_data(ay1_final_dly)
-    );
-
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+FY_BW)
-        ,.b_width(CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ay2_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_x_fy)
-        ,.b(cloud_z_d1)
-        ,.quotient(ay2_tmp)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DataDelay
-    #(
-        .DATA_BW(ID_COE_BW)
-       ,.STAGE(2)
-    ) u_ay2_dly (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(ay2_tmp[ID_COE_BW-1:0])
-        // Output
-        ,.o_data(ay2_final_dly)
-    );
-
-    DW_div_pipe #(
-         .a_width(FY_BW+MUL)
-        ,.b_width(CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ay4_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(fy_mul)
-        ,.b(cloud_z_d1)
-        ,.quotient(ay4_tmp)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DataDelay
-    #(
-        .DATA_BW(ID_COE_BW)
-       ,.STAGE(2)
-    ) u_ay4_dly (
-        // input
-         .i_clk(i_clk)
-        ,.i_rst_n(i_rst_n)
-        ,.i_data(ay4_tmp[ID_COE_BW-1:0])
-        // Output
-        ,.o_data(ay4_final_dly)
-    );
-
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+FY_BW+MUL)
-        ,.b_width(CLOUD_BW+CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_ay5_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(cloud_y_fy_mul)
-        ,.b(cloud_zz)
-        ,.quotient(ay5_tmp)
-        ,.remainder()
-        ,.divide_by_0()
     );
 
     DataDelay
@@ -576,15 +591,32 @@ module IndirectCoe
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(ay5_final_r[ID_COE_BW-1:0])
+        ,.i_data(ay5_final_r[ID_COE_BW-1:0])    //d12
         // Output
         ,.o_data(ay5_final_dly)
     );
 
-
     //===================
     //    Sequential
     //===================
+    //d8
+    always_ff @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) ax2_final_r <= '0;
+        else ax2_final_r <= ~ax2_tmp + 1;
+    end
+
+    //d12
+    always_ff @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) ax5_final_r <= '0;
+        else ax5_final_r <= ~ax5_tmp + 1;
+    end
+
+    always_ff @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) ay5_final_r <= '0;
+        else ay5_final_r <= ~ay5_tmp + 1;
+    end
+
+    //d13
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) ax0_final_r <= '0;
         else ax0_final_r <= ~ax0_tmp + 1;
@@ -596,25 +628,9 @@ module IndirectCoe
     end
 
     always_ff @(posedge i_clk or negedge i_rst_n) begin
-        if (!i_rst_n) ax2_final_r <= '0;
-        else ax2_final_r <= ~ax2_tmp + 1;
-    end
-
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
-        if (!i_rst_n) ax5_final_r <= '0;
-        else ax5_final_r <= ~ax5_tmp + 1;
-    end
-
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) ay0_final_r <= '0;
         else ay0_final_r <= ~r_fy + 1 - ay0_tmp;
     end
-
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
-        if (!i_rst_n) ay5_final_r <= '0;
-        else ay5_final_r <= ~ay5_tmp + 1;
-    end
-
 
 endmodule
 

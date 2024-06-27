@@ -6,13 +6,13 @@
 // Li-Yang Huang <lyhuang@media.ee.ntu.edu.tw>, 2022
 
 
-`include "common/RgbdVoConfigPk.sv"
+//`include "common/RgbdVoConfigPk.sv"
 //`include "./DW02_mult_2_stage.v"
 //`include "./DW_div.v"
 //`include "./DW_div_pipe.v"
 //`include "./DataDelay.sv"
 
-//4T
+//8T
 module Proj
     import RgbdVoConfigPk::*;
 #(
@@ -38,25 +38,25 @@ module Proj
     //=================================
     // Signal Declaration
     //=================================
-
+    //d1
     logic [CLOUD_BW+FX_BW-1:0]    px_mul;       //px_mul = tp_x * fx
-    logic [CLOUD_BW+FX_BW-1:0]    px_mul_div;   //px_mul_div = tp_x * fx / tp_z
-    logic [CLOUD_BW+FX_BW:0]      px_final_w;   //px_final_w = u = tp_x/tp_z*fx + cx
-    logic [CLOUD_BW+FX_BW:0]      px_final_r;
     logic [CLOUD_BW+FX_BW-1:0]    py_mul;       //py_mul = tp_y * fy
-    logic [CLOUD_BW+FX_BW-1:0]    py_mul_div;   //py_mul_div = tp_y * fy / tp_z
-    logic [CLOUD_BW+FX_BW:0]      py_final_w;   //py_final_w = v = tp_y/tp_z*fy + cy
-    logic [CLOUD_BW+FX_BW:0]      py_final_r;   
     logic [CLOUD_BW-1:0]          cloud_z_d1;   //cloud_z_d1 = i_cloud_z = tp_z
+
+    //d7
+    logic [CLOUD_BW+FX_BW-1:0]    px_mul_div;   //px_mul_div = tp_x * fx / tp_z
+    logic [CLOUD_BW+FX_BW-1:0]    py_mul_div;   //py_mul_div = tp_y * fy / tp_z
+    logic [CLOUD_BW+FX_BW:0]      px_final_w;   //px_final_w = u = tp_x/tp_z*fx + cx
+    logic [CLOUD_BW+FX_BW:0]      py_final_w;   //py_final_w = v = tp_y/tp_z*fy + cy
+
+    //d8
+    logic [CLOUD_BW+FX_BW:0]      px_final_r;
+    logic [CLOUD_BW+FX_BW:0]      py_final_r;   
 
     //=================================
     // Combinational Logic
     //=================================
-    assign o_idx_x = px_final_r[H_SIZE_BW-1+MUL:MUL];
-    assign o_idx_y = py_final_r[V_SIZE_BW-1+MUL:MUL];
-    assign px_final_w = $signed(px_mul_div) + $signed(r_cx);    //px_final_w = u = tp_x/tp_z*fx + cx
-    assign py_final_w = $signed(py_mul_div) + $signed(r_cy);    //py_final_w = v = tp_y/tp_z*fy + cy
-
+    //d1
     //px_mul = tp_x * fx
     DW02_mult_2_stage #(
          .A_width(CLOUD_BW)
@@ -81,49 +81,6 @@ module Proj
         ,.PRODUCT(py_mul)
     );
 
-    //px_mul_div = tp_x * fx / tp_z
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+FX_BW)
-        ,.b_width(CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_px_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(px_mul)
-        ,.b(cloud_z_d1)
-        ,.quotient(px_mul_div)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    //py_mul_div = tp_y * fy / tp_z
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+FY_BW)
-        ,.b_width(CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_py_div (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a(py_mul)
-        ,.b(cloud_z_d1)
-        ,.quotient(py_mul_div)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
@@ -137,10 +94,60 @@ module Proj
         ,.o_data(cloud_z_d1)
     );
 
+    //d7
+    assign px_final_w = $signed(px_mul_div) + $signed(r_cx);    //px_final_w = u = tp_x/tp_z*fx + cx
+    assign py_final_w = $signed(py_mul_div) + $signed(r_cy);    //py_final_w = v = tp_y/tp_z*fy + cy
+
+    //px_mul_div = tp_x * fx / tp_z
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+FX_BW)
+        ,.b_width(CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(7)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_px_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(px_mul) //d1
+        ,.b(cloud_z_d1) //d1
+        ,.quotient(px_mul_div)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //py_mul_div = tp_y * fy / tp_z
+    DW_div_pipe #(
+         .a_width(CLOUD_BW+FY_BW)
+        ,.b_width(CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(7)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_py_div (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a(py_mul) //d1
+        ,.b(cloud_z_d1) //d1
+        ,.quotient(py_mul_div)
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //d8
+    assign o_idx_x = px_final_r[H_SIZE_BW-1+MUL:MUL];
+    assign o_idx_y = py_final_r[V_SIZE_BW-1+MUL:MUL];
+
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(4)
+       ,.STAGE(8)
     ) u_valid (
         // input
          .i_clk(i_clk)
@@ -154,6 +161,7 @@ module Proj
     //===================
     //    Sequential
     //===================
+    //d8
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) px_final_r <= '0;
         else px_final_r <= (px_final_w[CLOUD_BW+FX_BW] == 0) ? px_final_w : {{CLOUD_BW{1'b1}},{FX_BW{1'b1}}}; 

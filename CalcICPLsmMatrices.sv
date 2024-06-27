@@ -56,7 +56,7 @@ module CalcICPLsmMatrices
     logic                     valid_work;
     logic [H_SIZE_BW+V_SIZE_BW-1:0] corresp_count;
 
-    //d4
+    //d6
     logic                     valid_p0;
     logic [CLOUD_BW-1:0]      p0_x;
     logic [CLOUD_BW-1:0]      p0_y;
@@ -67,7 +67,7 @@ module CalcICPLsmMatrices
     logic [CLOUD_BW-1:0]      p1_y;
     logic [CLOUD_BW-1:0]      p1_z;
 
-    //d7
+    //d9
     logic                     valid_tp0;
     logic [CLOUD_BW-1:0]      tp0_x;
     logic [CLOUD_BW-1:0]      tp0_y;
@@ -81,8 +81,8 @@ module CalcICPLsmMatrices
     logic [CLOUD_BW-1:0]      v_y_w;
     logic [CLOUD_BW-1:0]      v_z_w;
 
-    //d8
-    logic                     valid_work_d8;
+    //d10
+    logic                     valid_work_d10;
 
     logic [CLOUD_BW-1:0]      v_x_r;
     logic [CLOUD_BW-1:0]      v_y_r;
@@ -92,11 +92,11 @@ module CalcICPLsmMatrices
     logic [CLOUD_BW-1:0]      tp0_y_d1;
     logic [CLOUD_BW-1:0]      tp0_z_d1;
 
-    logic [CLOUD_BW-1:0]      n1_x_d8;
-    logic [CLOUD_BW-1:0]      n1_y_d8;
-    logic [CLOUD_BW-1:0]      n1_z_d8;
+    logic [CLOUD_BW-1:0]      n1_x_d10;
+    logic [CLOUD_BW-1:0]      n1_y_d10;
+    logic [CLOUD_BW-1:0]      n1_z_d10;
 
-    //d9
+    //d11
     logic [2*CLOUD_BW-1:0]    v_x_mul_n1_x;
     logic [2*CLOUD_BW-1:0]    v_y_mul_n1_y;
     logic [2*CLOUD_BW-1:0]    v_z_mul_n1_z;
@@ -108,25 +108,25 @@ module CalcICPLsmMatrices
     logic [2*CLOUD_BW-1:0]    A1_pre;
     logic [2*CLOUD_BW-1:0]    A2_pre;
 
-    //d10
-    logic                     valid_work_d10;
+    //d12
+    logic                     valid_work_d12;
 
     logic [2*CLOUD_BW-1:0]    diffs_r;
     logic [2*CLOUD_BW-1:0]    diffs_abs;
 
-    logic [2*CLOUD_BW-1:0]    sigma_d10;
+    logic [2*CLOUD_BW-1:0]    sigma_d12;
 
     logic [2*CLOUD_BW-1:0]    w_w;
 
-    //d11
-    logic                     valid_work_d11;
+    //d13
+    logic                     valid_work_d13;
 
     logic [4*CLOUD_BW-1:0]    diffs_squr;
     logic [4*CLOUD_BW-1:0]    sigma_next_squr_w;
 
-    logic [CLOUD_BW-1:0]      n1_x_d11;
-    logic [CLOUD_BW-1:0]      n1_y_d11;
-    logic [CLOUD_BW-1:0]      n1_z_d11;
+    logic [CLOUD_BW-1:0]      n1_x_d13;
+    logic [CLOUD_BW-1:0]      n1_y_d13;
+    logic [CLOUD_BW-1:0]      n1_z_d13;
 
     logic [2*CLOUD_BW-1:0]    A0_pre_d2;
     logic [2*CLOUD_BW-1:0]    A1_pre_d2;
@@ -136,22 +136,28 @@ module CalcICPLsmMatrices
 
     logic [2*CLOUD_BW-1:0]    diffs_r_d1;
 
-    //d12
+    //d14
     logic [4*CLOUD_BW-1:0]    sigma_next_squr_r;
 
-    //d13
-    logic                     frame_start_d13;
-    logic                     frame_end_d13;
-    logic                     valid_d13;
-    logic                     corresps_valid_d13;
+    //d21
+    logic [CLOUD_BW+2*MUL-1:0]       A3_result;
+    logic [CLOUD_BW+2*MUL-1:0]       A4_result;
+    logic [CLOUD_BW+2*MUL-1:0]       A5_result;
+
+    //d23
+    logic                     frame_start_d22;
+    logic                     frame_end_d22;
+    logic                     valid_d22;
+    logic                     corresps_valid_d22;
 
     logic [2*CLOUD_BW-MUL+2*MUL-1:0] A0_result;
     logic [2*CLOUD_BW-MUL+2*MUL-1:0] A1_result;
     logic [2*CLOUD_BW-MUL+2*MUL-1:0] A2_result;
-    logic [CLOUD_BW+2*MUL-1:0]       A3_result;
-    logic [CLOUD_BW+2*MUL-1:0]       A4_result;
-    logic [CLOUD_BW+2*MUL-1:0]       A5_result;
     logic [2*CLOUD_BW+MUL-1:0]       diff_div_w;
+
+    logic [ID_COE_BW-1:0]     A3_result_d2;
+    logic [ID_COE_BW-1:0]     A4_result_d2;
+    logic [ID_COE_BW-1:0]     A5_result_d2;
 
 
     //=================================
@@ -160,8 +166,8 @@ module CalcICPLsmMatrices
     //d0
     assign valid_work = i_valid && i_corresps_valid;
 
-    //d4
-    //4T
+    //d6
+    //6T
     //input u0,v0,d0; output p0_x, p0_y, p0_z
     Idx2Cloud u_idx2cloud_0 (
         // input
@@ -177,10 +183,10 @@ module CalcICPLsmMatrices
         ,.r_cx     ( r_cx )
         ,.r_cy     ( r_cy )
         // Output
-        ,.o_valid   (valid_p0)  //d4
-        ,.o_cloud_x (p0_x)  //d4
-        ,.o_cloud_y (p0_y)  //d4
-        ,.o_cloud_z (p0_z)  //d4
+        ,.o_valid   (valid_p0)  //d6
+        ,.o_cloud_x (p0_x)  //d6
+        ,.o_cloud_y (p0_y)  //d6
+        ,.o_cloud_z (p0_z)  //d6
     );
 
     //input u1,v1,d1; output p1_x, p1_y, p1_z
@@ -198,13 +204,13 @@ module CalcICPLsmMatrices
         ,.r_cx     ( r_cx )
         ,.r_cy     ( r_cy )
         // Output
-        ,.o_valid   (valid_p1)  //d4
-        ,.o_cloud_x (p1_x)  //d4
-        ,.o_cloud_y (p1_y)  //d4
-        ,.o_cloud_z (p1_z)  //d4
+        ,.o_valid   (valid_p1)  //d6
+        ,.o_cloud_x (p1_x)  //d6
+        ,.o_cloud_y (p1_y)  //d6
+        ,.o_cloud_z (p1_z)  //d6
     );
 
-    //d7
+    //d9
     assign v_x_w = p1_x_d3 - tp0_x;
     assign v_y_w = p1_y_d3 - tp0_y;
     assign v_z_w = p1_z_d3 - tp0_z;
@@ -266,18 +272,18 @@ module CalcICPLsmMatrices
         ,.o_data(p1_z_d3)
     );
 
-    //d8
+    //d10
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(8)
-    ) u_valid_work_d8 (
+       ,.STAGE(10)
+    ) u_valid_work_d10 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(valid_work)
         // Output
-        ,.o_data(valid_work_d8)
+        ,.o_data(valid_work_d10)
     );
 
     DataDelay
@@ -322,51 +328,51 @@ module CalcICPLsmMatrices
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
-       ,.STAGE(8)
-    ) u_n1_x_d8 (
+       ,.STAGE(10)
+    ) u_n1_x_d10 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_n1_x)
         // Output
-        ,.o_data(n1_x_d8)
+        ,.o_data(n1_x_d10)
     );
 
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
-       ,.STAGE(8)
-    ) u_n1_y_d8 (
+       ,.STAGE(10)
+    ) u_n1_y_d10 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_n1_y)
         // Output
-        ,.o_data(n1_y_d8)
+        ,.o_data(n1_y_d10)
     );
 
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
-       ,.STAGE(8)
-    ) u_n1_z_d8 (
+       ,.STAGE(10)
+    ) u_n1_z_d10 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_n1_z)
         // Output
-        ,.o_data(n1_z_d8)
+        ,.o_data(n1_z_d10)
     );
 
-    //d9
+    //d11
     assign diffs_w = v_x_mul_n1_x + v_y_mul_n1_y + v_z_mul_n1_z;
 
     DW02_mult_2_stage #(
          .A_width(CLOUD_BW)
         ,.B_width(CLOUD_BW)
     ) u_v_x_mul_n1_x (
-         .A(v_x_r)
-        ,.B(n1_x_d8)
+         .A(v_x_r)  //d10
+        ,.B(n1_x_d10)   //d10
         ,.TC(1'b1)
         ,.CLK(i_clk)
         ,.PRODUCT(v_x_mul_n1_x)
@@ -377,7 +383,7 @@ module CalcICPLsmMatrices
         ,.B_width(CLOUD_BW)
     ) u_v_y_mul_n1_y (
          .A(v_y_r)
-        ,.B(n1_y_d8)
+        ,.B(n1_y_d10)
         ,.TC(1'b1)
         ,.CLK(i_clk)
         ,.PRODUCT(v_y_mul_n1_y)
@@ -388,7 +394,7 @@ module CalcICPLsmMatrices
         ,.B_width(CLOUD_BW)
     ) u_v_z_mul_n1_z (
          .A(v_z_r)
-        ,.B(n1_z_d8)
+        ,.B(n1_z_d10)
         ,.TC(1'b1)
         ,.CLK(i_clk)
         ,.PRODUCT(v_z_mul_n1_z)
@@ -399,13 +405,13 @@ module CalcICPLsmMatrices
         // input
          .i_clk     ( i_clk )
         ,.i_rst_n   ( i_rst_n)
-        ,.i_valid   ( valid_work_d8 )
+        ,.i_valid   ( valid_work_d10 )
         ,.i_p0_x    ( tp0_x_d1 )
         ,.i_p0_y    ( tp0_y_d1 )
         ,.i_p0_z    ( tp0_z_d1 )
-        ,.i_p1_x    ( n1_x_d8 )
-        ,.i_p1_y    ( n1_y_d8 )
-        ,.i_p1_z    ( n1_z_d8 )
+        ,.i_p1_x    ( n1_x_d10 )
+        ,.i_p1_y    ( n1_y_d10 )
+        ,.i_p1_z    ( n1_z_d10 )
         // Output
         ,.o_valid     ( valid_Cross )
         ,.o_normal_x  ( A0_pre )
@@ -413,99 +419,99 @@ module CalcICPLsmMatrices
         ,.o_normal_z  ( A2_pre )
     );
 
-    //d10
-    assign w_w = sigma_d10 + diffs_abs;
+    //d12
+    assign w_w = sigma_d12 + diffs_abs;
 
     DataDelay
     #(
         .DATA_BW(1)
        ,.STAGE(2)
-    ) u_valid_work_d10 (
+    ) u_valid_work_d12 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_work_d8)
+        ,.i_data(valid_work_d10)
         // Output
-        ,.o_data(valid_work_d10)
+        ,.o_data(valid_work_d12)
     );
 
     DataDelay
     #(
         .DATA_BW(2*CLOUD_BW)
-       ,.STAGE(10)
-    ) u_sigma_d10 (
+       ,.STAGE(12)
+    ) u_sigma_d12 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_sigma_icp)
         // Output
-        ,.o_data(sigma_d10)
+        ,.o_data(sigma_d12)
     );
 
-    //d11
+    //d13
     assign sigma_next_squr_w = sigma_next_squr_r + diffs_squr;
 
     DW02_mult_2_stage #(
          .A_width(2*CLOUD_BW)
         ,.B_width(2*CLOUD_BW)
     ) u_diffs_squr (
-         .A(diffs_r)
-        ,.B(diffs_r)
+         .A(diffs_r)    //d12
+        ,.B(diffs_r)    //d12
         ,.TC(1'b1)
         ,.CLK(i_clk)
-        ,.PRODUCT(diffs_squr)
+        ,.PRODUCT(diffs_squr)   //d13
     );
 
     DataDelay
     #(
         .DATA_BW(1)
        ,.STAGE(1)
-    ) u_valid_work_d11 (
+    ) u_valid_work_d13 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(valid_work_d10)
+        ,.i_data(valid_work_d12)
         // Output
-        ,.o_data(valid_work_d11)
+        ,.o_data(valid_work_d13)
     );
 
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
        ,.STAGE(3)
-    ) u_n1_x_d11 (
+    ) u_n1_x_d13 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(n1_x_d8)
+        ,.i_data(n1_x_d10)
         // Output
-        ,.o_data(n1_x_d11)
+        ,.o_data(n1_x_d13)
     );
 
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
        ,.STAGE(3)
-    ) u_n1_y_d11 (
+    ) u_n1_y_d13 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(n1_y_d8)
+        ,.i_data(n1_y_d10)
         // Output
-        ,.o_data(n1_y_d11)
+        ,.o_data(n1_y_d13)
     );
 
     DataDelay
     #(
         .DATA_BW(CLOUD_BW)
        ,.STAGE(3)
-    ) u_n1_z_d11 (
+    ) u_n1_z_d13 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(n1_z_d8)
+        ,.i_data(n1_z_d10)
         // Output
-        ,.o_data(n1_z_d11)
+        ,.o_data(n1_z_d13)
     );
 
     DataDelay
@@ -516,9 +522,9 @@ module CalcICPLsmMatrices
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(A0_pre)
+        ,.i_data(A0_pre)    //d11
         // Output
-        ,.o_data(A0_pre_d2)
+        ,.o_data(A0_pre_d2) //d13
     );
 
     DataDelay
@@ -529,9 +535,9 @@ module CalcICPLsmMatrices
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(A1_pre)
+        ,.i_data(A1_pre)    //d11
         // Output
-        ,.o_data(A1_pre_d2)
+        ,.o_data(A1_pre_d2) //d13
     );
 
     DataDelay
@@ -542,9 +548,9 @@ module CalcICPLsmMatrices
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(A2_pre)
+        ,.i_data(A2_pre)    //d11
         // Output
-        ,.o_data(A2_pre_d2)
+        ,.o_data(A2_pre_d2) //d13
     );
 
     DataDelay
@@ -555,93 +561,18 @@ module CalcICPLsmMatrices
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
-        ,.i_data(diffs_r)
+        ,.i_data(diffs_r)   //d12
         // Output
-        ,.o_data(diffs_r_d1)
+        ,.o_data(diffs_r_d1)    //d13
     );
 
-    //d13
-    assign o_frame_start    = frame_start_d13;
-    assign o_frame_end      = frame_end_d13;
-    assign o_valid          = valid_d13;
-    assign o_corresps_valid = corresps_valid_d13;
-    assign o_A0 = A0_result[ID_COE_BW-1:0];
-    assign o_A1 = A1_result[ID_COE_BW-1:0];
-    assign o_A2 = A2_result[ID_COE_BW-1:0];
-    assign o_A3 = A3_result[ID_COE_BW-1:0];
-    assign o_A4 = A4_result[ID_COE_BW-1:0];
-    assign o_A5 = A5_result[ID_COE_BW-1:0];
-    assign o_diff_div_w = diff_div_w[ID_COE_BW-1:0];
-    assign o_corresp_count = corresp_count;
-    assign o_sigma_s_icp = sigma_next_squr_r;
-
-    //2T
+    //d20
     DW_div_pipe #(
-         .a_width(2*CLOUD_BW-MUL+2*MUL)
+         .a_width(CLOUD_BW+2*MUL)   //90 bits
         ,.b_width(2*CLOUD_BW)
         ,.tc_mode(1)
         ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_A0 (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a({A0_pre_d2,{MUL{1'b0}}})
-        ,.b(w_r)
-        ,.quotient(A0_result)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DW_div_pipe #(
-         .a_width(2*CLOUD_BW-MUL+2*MUL)
-        ,.b_width(2*CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_A1 (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a({A1_pre_d2,{MUL{1'b0}}})
-        ,.b(w_r)
-        ,.quotient(A1_result)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DW_div_pipe #(
-         .a_width(2*CLOUD_BW-MUL+2*MUL)
-        ,.b_width(2*CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
-        ,.stall_mode(0)
-        ,.rst_mode(1)
-        ,.op_iso_mode(1)
-    ) u_A2 (
-         .clk(i_clk)
-        ,.rst_n(i_rst_n)
-        ,.en(1'b1)
-        ,.a({A2_pre_d2,{MUL{1'b0}}})
-        ,.b(w_r)
-        ,.quotient(A2_result)
-        ,.remainder()
-        ,.divide_by_0()
-    );
-
-    DW_div_pipe #(
-         .a_width(CLOUD_BW+2*MUL)
-        ,.b_width(2*CLOUD_BW)
-        ,.tc_mode(1)
-        ,.rem_mode(1)
-        ,.num_stages(3)
+        ,.num_stages(8)
         ,.stall_mode(0)
         ,.rst_mode(1)
         ,.op_iso_mode(1)
@@ -649,19 +580,19 @@ module CalcICPLsmMatrices
          .clk(i_clk)
         ,.rst_n(i_rst_n)
         ,.en(1'b1)
-        ,.a({n1_x_d11,{(2*MUL){1'b0}}})
-        ,.b(w_r)
-        ,.quotient(A3_result)
+        ,.a({n1_x_d13,{(2*MUL){1'b0}}}) //d13
+        ,.b(w_r)    //d13
+        ,.quotient(A3_result)   //d20
         ,.remainder()
         ,.divide_by_0()
     );
 
     DW_div_pipe #(
-         .a_width(CLOUD_BW+2*MUL)
+         .a_width(CLOUD_BW+2*MUL)   //90 bits
         ,.b_width(2*CLOUD_BW)
         ,.tc_mode(1)
         ,.rem_mode(1)
-        ,.num_stages(3)
+        ,.num_stages(8)
         ,.stall_mode(0)
         ,.rst_mode(1)
         ,.op_iso_mode(1)
@@ -669,19 +600,19 @@ module CalcICPLsmMatrices
          .clk(i_clk)
         ,.rst_n(i_rst_n)
         ,.en(1'b1)
-        ,.a({n1_y_d11,{(2*MUL){1'b0}}})
-        ,.b(w_r)
-        ,.quotient(A4_result)
+        ,.a({n1_y_d13,{(2*MUL){1'b0}}}) //d13
+        ,.b(w_r)    //d13
+        ,.quotient(A4_result)   //d20
         ,.remainder()
         ,.divide_by_0()
     );
 
     DW_div_pipe #(
-         .a_width(CLOUD_BW+2*MUL)
+         .a_width(CLOUD_BW+2*MUL)   //90 bits
         ,.b_width(2*CLOUD_BW)
         ,.tc_mode(1)
         ,.rem_mode(1)
-        ,.num_stages(3)
+        ,.num_stages(8)
         ,.stall_mode(0)
         ,.rst_mode(1)
         ,.op_iso_mode(1)
@@ -689,19 +620,94 @@ module CalcICPLsmMatrices
          .clk(i_clk)
         ,.rst_n(i_rst_n)
         ,.en(1'b1)
-        ,.a({n1_z_d11,{(2*MUL){1'b0}}})
-        ,.b(w_r)
-        ,.quotient(A5_result)
+        ,.a({n1_z_d13,{(2*MUL){1'b0}}}) //d13
+        ,.b(w_r)    //d13
+        ,.quotient(A5_result)   //d20
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    //d22
+    assign o_frame_start    = frame_start_d22;
+    assign o_frame_end      = frame_end_d22;
+    assign o_valid          = valid_d22;
+    assign o_corresps_valid = corresps_valid_d22;
+    assign o_A0 = A0_result[ID_COE_BW-1:0];
+    assign o_A1 = A1_result[ID_COE_BW-1:0];
+    assign o_A2 = A2_result[ID_COE_BW-1:0];
+    assign o_A3 = A3_result_d2;
+    assign o_A4 = A4_result_d2;
+    assign o_A5 = A5_result_d2;
+    assign o_diff_div_w = diff_div_w[ID_COE_BW-1:0];
+    assign o_corresp_count = corresp_count;
+    assign o_sigma_s_icp = sigma_next_squr_r;
+
+    DW_div_pipe #(
+         .a_width(2*CLOUD_BW-MUL+2*MUL) //108 bits
+        ,.b_width(2*CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(10)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_A0 (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a({A0_pre_d2,{MUL{1'b0}}})    //d13
+        ,.b(w_r)    //d13
+        ,.quotient(A0_result)   //d22
         ,.remainder()
         ,.divide_by_0()
     );
 
     DW_div_pipe #(
-         .a_width(2*CLOUD_BW+MUL)
+         .a_width(2*CLOUD_BW-MUL+2*MUL) //108 bits
         ,.b_width(2*CLOUD_BW)
         ,.tc_mode(1)
         ,.rem_mode(1)
-        ,.num_stages(3)
+        ,.num_stages(10)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_A1 (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a({A1_pre_d2,{MUL{1'b0}}})    //d13
+        ,.b(w_r)    //d13
+        ,.quotient(A1_result)   //d22
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    DW_div_pipe #(
+         .a_width(2*CLOUD_BW-MUL+2*MUL) //108 bits
+        ,.b_width(2*CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(10)
+        ,.stall_mode(0)
+        ,.rst_mode(1)
+        ,.op_iso_mode(1)
+    ) u_A2 (
+         .clk(i_clk)
+        ,.rst_n(i_rst_n)
+        ,.en(1'b1)
+        ,.a({A2_pre_d2,{MUL{1'b0}}})    //d13
+        ,.b(w_r)    //d13
+        ,.quotient(A2_result)   //d22
+        ,.remainder()
+        ,.divide_by_0()
+    );
+
+    DW_div_pipe #(
+         .a_width(2*CLOUD_BW+MUL)   //108 bits
+        ,.b_width(2*CLOUD_BW)
+        ,.tc_mode(1)
+        ,.rem_mode(1)
+        ,.num_stages(10)
         ,.stall_mode(0)
         ,.rst_mode(1)
         ,.op_iso_mode(1)
@@ -709,9 +715,9 @@ module CalcICPLsmMatrices
          .clk(i_clk)
         ,.rst_n(i_rst_n)
         ,.en(1'b1)
-        ,.a({diffs_r_d1,{MUL{1'b0}}})
-        ,.b(w_r)
-        ,.quotient(diff_div_w)
+        ,.a({diffs_r_d1,{MUL{1'b0}}})   //d13
+        ,.b(w_r)    //d13
+        ,.quotient(diff_div_w)  //d22
         ,.remainder()
         ,.divide_by_0()
     );
@@ -719,53 +725,92 @@ module CalcICPLsmMatrices
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(13)
-    ) u_frame_start_d13 (
+       ,.STAGE(22)
+    ) u_frame_start_d22 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_frame_start)
         // Output
-        ,.o_data(frame_start_d13)
+        ,.o_data(frame_start_d22)
     );
 
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(13)
-    ) u_frame_end_d13 (
+       ,.STAGE(22)
+    ) u_frame_end_d22 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_frame_end)
         // Output
-        ,.o_data(frame_end_d13)
+        ,.o_data(frame_end_d22)
     );
     
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(13)
-    ) u_valid_d13 (
+       ,.STAGE(22)
+    ) u_valid_d22 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_valid)
         // Output
-        ,.o_data(valid_d13)
+        ,.o_data(valid_d22)
     );
 
     DataDelay
     #(
         .DATA_BW(1)
-       ,.STAGE(13)
-    ) u_corresps_valid_d13 (
+       ,.STAGE(22)
+    ) u_corresps_valid_d22 (
         // input
          .i_clk(i_clk)
         ,.i_rst_n(i_rst_n)
         ,.i_data(i_corresps_valid)
         // Output
-        ,.o_data(corresps_valid_d13)
+        ,.o_data(corresps_valid_d22)
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(ID_COE_BW)
+       ,.STAGE(2)
+    ) u_A3_result_d2 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(A3_result[ID_COE_BW-1:0])  //d20
+        // Output
+        ,.o_data(A3_result_d2)  //d22
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(ID_COE_BW)
+       ,.STAGE(2)
+    ) u_A4_result_d2 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(A4_result[ID_COE_BW-1:0])  //d20
+        // Output
+        ,.o_data(A4_result_d2)  //d22
+    );
+
+    DataDelay
+    #(
+        .DATA_BW(ID_COE_BW)
+       ,.STAGE(2)
+    ) u_A5_result_d2 (
+        // input
+         .i_clk(i_clk)
+        ,.i_rst_n(i_rst_n)
+        ,.i_data(A5_result[ID_COE_BW-1:0])  //d20
+        // Output
+        ,.o_data(A5_result_d2)  //d22
     );
 
     //===================
@@ -779,7 +824,7 @@ module CalcICPLsmMatrices
         else corresp_count <= corresp_count;
     end
 
-    //d8
+    //d10
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) v_x_r <= 0;
         else if (i_update_done) v_x_r <= 0;
@@ -798,7 +843,7 @@ module CalcICPLsmMatrices
         else v_z_r <= v_z_w;
     end
 
-    //d10
+    //d12
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) diffs_r <= 0;
         else if (i_update_done) diffs_r <= 0;
@@ -812,19 +857,19 @@ module CalcICPLsmMatrices
         else diffs_abs <= -diffs_w;
     end
 
-    //d11
+    //d13
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) w_r <= 1;
         else if (i_update_done) w_r <= 1;
-        else if (valid_work_d10) w_r <= (w_w == 0) ? 1 : w_w;
+        else if (valid_work_d12) w_r <= (w_w == 0) ? 1 : w_w;
         else w_r <= w_r;
     end
 
-    //d12
+    //d14
     always_ff @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) sigma_next_squr_r <= 0;
         else if (i_update_done) sigma_next_squr_r <= 0;
-        else if (valid_work_d11) sigma_next_squr_r <= sigma_next_squr_w;
+        else if (valid_work_d13) sigma_next_squr_r <= sigma_next_squr_w;
         else sigma_next_squr_r <= sigma_next_squr_r;
     end
 
